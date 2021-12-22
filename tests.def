@@ -1,0 +1,14 @@
+# Build tests using all OpenMPI versions installed in openmpi.sif
+Bootstrap: localimage
+From: ./openmpi.sif
+
+%files
+    ./scripts/build_tests.sh /opt/
+    ./src/testcase.c /opt/
+
+%post
+    cd opt/ && ompi_prefix=/opt/ompi prefix=/opt/tests/ bash ./build_tests.sh
+
+    # Clean up
+    rm /opt/*.sh /opt/*.c
+
