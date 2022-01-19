@@ -366,7 +366,7 @@ in the container).
   newer).
 - Document building containers using MPICH instead of Open MPI
   (probably [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]).
-- Update to use UCX (and =libfabric=?).
+- Update to use [[https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx][UCX]] (and =libfabric=?).
 - Make sure that the list of packages in =base.def= does not include
   anything unnecessary.
 
