@@ -19,7 +19,7 @@ Stage: build
 
     export ompi_prefix=/opt/ompi
 
-    /opt/openmpi.sh
+    prefix=${ompi_prefix} version=4.1.2 /opt/openmpi.sh
 
     ompi_mca_params=${ompi_prefix}/etc/openmpi-mca-params.conf
 
