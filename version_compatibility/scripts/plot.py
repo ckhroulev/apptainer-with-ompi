@@ -23,16 +23,16 @@ fig, ax = plt.subplots()
 fig.set_size_inches(20, 20)
 fig.set_dpi(50)
 
-ax.set_title("Singularity and Open MPI: host-container version compatibility")
+ax.set_title("Apptainer (Singularity) and Open MPI: host-container version compatibility")
 ax.spy(flags, origin="lower", marker=".", markersize=40)
 ax.grid()
 
-ax.set_xlabel("container")
+ax.set_xlabel("Container Open MPI version")
 ax.set_xticks(np.arange(nv))
 ax.set_xticklabels(versions)
 ax.tick_params(axis='x', rotation=90)
 
-ax.set_ylabel("host")
+ax.set_ylabel("Host Open MPI version")
 ax.set_yticks(np.arange(nv))
 ax.set_yticklabels(versions)
 

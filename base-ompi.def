@@ -1,0 +1,24 @@
+# Install MPI
+Bootstrap: localimage
+From: ./build.sif
+
+%files
+    ./scripts/openmpi.sh /opt/
+    ./src/mpi_hello.c /opt/
+
+%post
+    export ompi_prefix=/opt/ompi
+
+    /opt/openmpi.sh
+
+    ompi_mca_params=${ompi_prefix}/etc/openmpi-mca-params.conf
+
+    # Do not use tcp:
+    echo "btl = vader,self,openib" >> ${ompi_mca_params}
+    # Use openib without ucx in Open MPI 4.0 and later:
+    echo "btl_openib_allow_ib = 1" >> ${ompi_mca_params}
+
+    ${ompi_prefix}/bin/mpicc /opt/mpi_hello.c -o /opt/mpi_hello
+
+%environment
+    export PATH=/opt/ompi/bin:$PATH

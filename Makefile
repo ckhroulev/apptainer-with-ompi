@@ -1,16 +1,15 @@
-all: compatibility-grid.png
+INTERMEDIATE=base.sif build.sif base-ompi.sif
+.INTERMEDIATE: ${INTERMEDIATE}
 
-compatibility-grid.png: failure.log
-	python3 ./scripts/plot.py $< $@
+build.sif: base.sif
+
+base.sif: base.def
+
+base-ompi.sif: build.sif scripts/openmpi.sh
 
 %.sif: %.def
 	singularity build --fakeroot --force $@ $<
 
-tests.sif: openmpi.sif
-
-.PHONY: host
-host:
-	./scripts/build_all_openmpi.sh
-
-failure.log: tests.sif
-	bash ./scripts/run_all_tests.sh ./scripts/run_test.sh $@
+.PHONY: clean
+clean:
+	rm -f ${INTERMEDIATE}

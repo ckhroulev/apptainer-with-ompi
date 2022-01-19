@@ -1,8 +1,8 @@
 This repository contains scripts I used to try to document Open MPI
-version compatibility between Open MPI installed *in a Singularity
+version compatibility between Open MPI installed *in an Apptainer
 container* and *on the host*.
 
-![Version compatibility plot](./compatibility-grid.png)
+![Version compatibility plot](./grid.png)
 
 To reproduce, run
 
