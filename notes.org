@@ -1,5 +1,7 @@
 #+TITLE: Apptainer (Singularity) containers with MPI
 
+* Apptainer (Singularity) containers with Open MPI and InfiniBand
+
 These notes document my attempt to build an [[https://apptainer.org/][Apptainer]] (or
 [[https://sylabs.io/singularity/][SingularityCE]]) base container that can be used to run MPI-based
 software in "hybrid" mode.
@@ -17,7 +19,7 @@ The image is built in 2 steps:
 1. The base image =base.sif= containing support libraries for the
    network hardware and utilities needed to test if it works.
 2. The final image =openmpi.sif= includes everything in =base.sif=,
-   the Open MPI installation in =/var/ompi=, and the "MPI Hello World"
+   the Open MPI installation in =/opt/ompi=, and the "MPI Hello World"
    program =/opt/mpi_hello= used to test Open MPI.
 
    All the commands needed to build Open MPI are in a Bash script
@@ -53,7 +55,7 @@ research and that may require using more current Open MPI versions
 than a certain host provides.
 
 The plot below shows which Open MPI version combinations appear to be
-compatible. (See [[https://github.com/ckhroulev/apptainer-with-ompi][github.com/ckhroulev/apptainer-with-ompi]] for the
+compatible. (See [[file:version_compatibility/README.md][=version_compatibility=]] for the
 setup used to produce it.)
 
 #+attr_html: :width 800px
@@ -83,7 +85,7 @@ If you run a container and it fails with the error message saying
 supported by =glibc= in the container.
 
 The relevant threshold is this: /glibc 2.26 and newer require Linux
-3.2./
+3.2 or newer./
 
 For example, given a host that runs CentOS 6.10, [[https://distrowatch.com/table.php?distribution=centos][this DistroWatch.com
 page]] shows that it uses Linux 2.6.32.
@@ -119,7 +121,7 @@ Running =ibv_devices= from =libibverbs-utils= should produce output
 similar to this:
    
 #+BEGIN_EXAMPLE
-  % singularity exec mpi.sif ibv_devices
+  % singularity exec base.sif ibv_devices
       device                 node GUID
       ------              ----------------
       mlx4_0              7cfe900300c40490
@@ -129,14 +131,14 @@ Running the same command on a laptop that does not have IB devices
 gives this:
 
 #+BEGIN_EXAMPLE
-  % singularity exec mpi.sif ibv_devices
+  % singularity exec base.sif ibv_devices
   Failed to get IB devices list: Unknown error -38
 #+END_EXAMPLE
 
 Alternatively, run =ibstat= from =infiniband-diags=:
 
 #+BEGIN_EXAMPLE
-  % singularity exec mpi.sif ibstat
+  % singularity exec base.sif ibstat
   CA 'mlx4_0'
           CA type: MT4099
           Number of ports: 1
@@ -158,7 +160,7 @@ Alternatively, run =ibstat= from =infiniband-diags=:
 
 Without IB devices:
 #+BEGIN_EXAMPLE
-  % singularity exec mpi.sif ibstat
+  % singularity exec base.sif ibstat
   ibpanic: [2137592] main: stat of IB device 'mthca0' failed: No such file or directory
 #+END_EXAMPLE
 
@@ -175,7 +177,7 @@ srun -p debug --nodes=1 --exclusive -I --pty /bin/bash
 Then, run this on a compute node to start =ibv_rc_pingpong= in its
 /server/ mode:
 #+BEGIN_EXAMPLE
-% hostname && singularity exec mpi.sif ibv_rc_pingpong
+% hostname && singularity exec openmpi.sif ibv_rc_pingpong
 n2
   local address:  LID 0x0091, QPN 0x03006b, PSN 0x5a83c9, GID ::
   remote address: LID 0x0031, QPN 0x002962, PSN 0x850520, GID ::
@@ -186,7 +188,7 @@ n2
 Next, use the =hostname= output from above (here: =n2=) to run
 =ibv_rc_pingpong= on the login node:
 #+BEGIN_EXAMPLE
-% singularity exec mpi.sif ibv_rc_pingpong n2
+% singularity exec openmpi.sif ibv_rc_pingpong n2
   local address:  LID 0x0031, QPN 0x002962, PSN 0x850520, GID ::
   remote address: LID 0x0091, QPN 0x03006b, PSN 0x5a83c9, GID ::
 8192000 bytes in 0.01 seconds = 9630.57 Mbit/sec
@@ -307,7 +309,7 @@ The two recommended test steps are
 *** Using =mpirun= in the container
 
 #+BEGIN_EXAMPLE
-% singularity exec mpi.sif mpirun -n 4 /opt/mpi_hello
+% singularity exec openmpi.sif mpirun -n 4 /opt/mpi_hello
 Hello from process 0/4!
 Hello from process 1/4!
 Hello from process 2/4!
@@ -317,7 +319,7 @@ Hello from process 3/4!
 We can also increase verbosity to check if Open MPI succeeded at
 initializing InfiniBand devices:
 #+BEGIN_EXAMPLE
-% singularity exec mpi.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 /opt/mpi_hello | grep openib
+% singularity exec openmpi.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 /opt/mpi_hello | grep openib
 [hostname:pid] mca: base: components_register: found loaded component openib
 [hostname:pid] mca: base: components_register: component openib register function successful
 [hostname:pid] mca: base: components_open: found loaded component openib
@@ -337,7 +339,7 @@ the process ID.
 
 A successful run looks like this:
 #+BEGIN_EXAMPLE
-% mpirun -n 4 singularity exec mpi.sif /opt/mpi_hello
+% mpirun -n 4 singularity exec openmpi.sif /opt/mpi_hello
 Hello from process 0/4!
 Hello from process 1/4!
 Hello from process 2/4!
@@ -354,7 +356,7 @@ To check IB initialization:
   mpirun -n 1 \
          --mca btl_base_verbose 100 \
          --mca mca_base_verbose stdout \
-         singularity exec mpi.sif /opt/mpi_hello | grep openib
+         singularity exec openmpi.sif /opt/mpi_hello | grep openib
 #+END_SRC
 
 This command should produce the same output as the one above (=mpirun=
@@ -372,16 +374,15 @@ in the container).
 
 * Acknowledgments
 
-This work was inspired by [[https://blogs.ed.ac.uk/mhagdorn/2020/08/14/using-singularity-to-containerise-a-scientific-model/][a blog post by Magnus Hagdorn at the
-University of Edinburgh]].
+This work was inspired by [[https://blogs.ed.ac.uk/mhagdorn/2020/08/14/using-singularity-to-containerise-a-scientific-model/][a blog post by Magnus Hagdorn]].
 
 I'd like to thank [[https://www.gi.alaska.edu/services/research-computing-systems][Research Computing Systems staff at UAF]] and [[https://nas.nasa.gov/][NASA
 Advanced Supercomputing (NAS) Division support staff]] for their help.
 
-The specific output of "MPI Hello World" (included here) is inspired
-by the [[https://youtu.be/jl2cT9gkxwo][recording of the 2022-1-6 Singularity CE community meeting]].
-Details regarding building Open MPI in a way that support Slurm come
-from the same recording.
+The specific output of "MPI Hello World" used here is inspired by
+Singularity docs and the [[https://youtu.be/jl2cT9gkxwo][recording of the 2022-1-6 Singularity CE
+community meeting]]. Details regarding building Open MPI in a way that
+support Slurm come from the same recording.
 
 Some of the ideas come from the discussion of the
 [[https://github.com/apptainer/singularity/issues/876][Apptainer/singularity issue 876]].

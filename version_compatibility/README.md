@@ -1,6 +1,6 @@
-This repository contains scripts I used to try to document Open MPI
-version compatibility between Open MPI installed *in an Apptainer
-container* and *on the host*.
+This directory contains scripts I used to try to document version
+compatibility between Open MPI installed *in an Apptainer container*
+and *on the host*.
 
 ![Version compatibility plot](./grid.png)
 
