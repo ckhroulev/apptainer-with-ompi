@@ -1,12 +1,21 @@
 # Install MPI
 Bootstrap: localimage
-From: ./build.sif
+From: ./base.sif
+Stage: build
 
 %files
     ./scripts/openmpi.sh /opt/
     ./src/mpi_hello.c /opt/
 
 %post
+    yum -y install \
+       gcc \
+       gcc-c++ \
+       gcc-gfortran \
+       make \
+       wget \
+       ;
+
     export ompi_prefix=/opt/ompi
 
     /opt/openmpi.sh
@@ -20,5 +29,13 @@ From: ./build.sif
 
     ${ompi_prefix}/bin/mpicc /opt/mpi_hello.c -o /opt/mpi_hello
 
+Bootstrap: localimage
+From: ./base.sif
+Stage: install
+
 %environment
     export PATH=/opt/ompi/bin:$PATH
+
+%files from build
+    /opt/ /
+
