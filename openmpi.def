@@ -41,6 +41,9 @@ Stage: install
     /opt/ /
 
 %post
+    # An SSH or RSH client is a runtime dependency of Open MPI in its
+    # default configuration.
+    yum -y install openssh-clients
     yum clean all
 
 %runscript
