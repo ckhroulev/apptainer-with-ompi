@@ -1,22 +1,22 @@
 
 # Table of Contents
 
-1.  [Software compatibility](#orgc1c1be9)
-    1.  [Open MPI](#org76f8f70)
-        1.  [Compatibility between Open MPI and its dependencies](#org18bf774)
-    2.  [Compatibility between the host kernel and the container OS](#orgb26193b)
-2.  [InfiniBand and RDMA support](#orga0f9dbd)
-    1.  [Checking if IB devices are available](#orgadc15cb)
-    2.  [Checking inter-node communication using IB](#orgacb0dc0)
-3.  [Building Open MPI](#org307bbae)
-    1.  [Configuring Open MPI](#orga6dfda2)
-        1.  [Finding Open MPI's configuration files](#org43b6347)
-        2.  [Useful MCA parameters](#org6f26de8)
-    2.  [Testing an Open MPI installation](#orge557851)
-        1.  [Using `mpirun` in the container](#org21d005b)
-        2.  [Using `mpirun` on the host](#org830edef)
-4.  [To do](#org40333f5)
-5.  [Acknowledgements](#orgb7ff5af)
+1.  [Software compatibility](#org2a2584d)
+    1.  [Open MPI](#orgec51ad6)
+        1.  [Compatibility between Open MPI and its dependencies](#org50fea31)
+    2.  [Compatibility between the host kernel and the container OS](#orge76c1cb)
+2.  [InfiniBand and RDMA support](#orgb1e4d25)
+    1.  [Checking if IB devices are available](#orgaebfd57)
+    2.  [Checking inter-node communication using IB](#org2800c5e)
+3.  [Building Open MPI](#org095b795)
+    1.  [Configuring Open MPI](#org57acbe1)
+        1.  [Finding Open MPI's configuration files](#org8538abb)
+        2.  [Useful MCA parameters](#org0e74112)
+    2.  [Testing an Open MPI installation](#org9c90564)
+        1.  [Using `mpirun` in the container](#orgdae7965)
+        2.  [Using `mpirun` on the host](#orge74dc92)
+4.  [To do](#org91eb83f)
+5.  [Acknowledgments](#org810bcd9)
 
 These notes document my attempt to build an [Apptainer](https://apptainer.org/) (or
 [SingularityCE](https://sylabs.io/singularity/)) base container that can be used to run MPI-based
@@ -59,12 +59,12 @@ Edits (however minor), corrections, improvements, etc are always
 welcome.
 
 
-<a id="orgc1c1be9"></a>
+<a id="org2a2584d"></a>
 
 # Software compatibility
 
 
-<a id="org76f8f70"></a>
+<a id="orgec51ad6"></a>
 
 ## Open MPI
 
@@ -84,10 +84,10 @@ setup used to produce it.)
 
 Based on this I would recommend using Open MPI version 4.0.0 or newer
 in the container because these versions are compatible with Open MPI
-3.0.3 and newer on the host.
+3.0.3 and newer on the host. Your mileage may vary.
 
 
-<a id="org18bf774"></a>
+<a id="org50fea31"></a>
 
 ### Compatibility between Open MPI and its dependencies
 
@@ -101,7 +101,7 @@ distribution that is significantly older than the chosen Open MPI
 version.
 
 
-<a id="orgb26193b"></a>
+<a id="orge76c1cb"></a>
 
 ## Compatibility between the host kernel and the container OS
 
@@ -127,7 +127,7 @@ In this particular case CentOS 7 should work: it uses `glibc` 2.17 and
 is supported until June of 2024.
 
 
-<a id="orga0f9dbd"></a>
+<a id="orgb1e4d25"></a>
 
 # InfiniBand and RDMA support
 
@@ -167,7 +167,7 @@ Note: recommended packages `libibverbs-utils` and `infiniband-diags`
 are used to test InfiniBand support below.
 
 
-<a id="orgadc15cb"></a>
+<a id="orgaebfd57"></a>
 
 ## Checking if IB devices are available
 
@@ -212,7 +212,7 @@ Without IB devices:
     ibpanic: [2137592] main: stat of IB device 'mthca0' failed: No such file or directory
 
 
-<a id="orgacb0dc0"></a>
+<a id="org2800c5e"></a>
 
 ## Checking inter-node communication using IB
 
@@ -243,7 +243,7 @@ Next, use the `hostname` output from above (here: `n2`) to run
     1000 iters in 0.01 seconds = 6.80 usec/iter
 
 
-<a id="org307bbae"></a>
+<a id="org095b795"></a>
 
 # Building Open MPI
 
@@ -271,7 +271,7 @@ Run
 *after* the build is complete to check if `openib` support was included.
 
 
-<a id="orga6dfda2"></a>
+<a id="org57acbe1"></a>
 
 ## Configuring Open MPI
 
@@ -301,7 +301,7 @@ Open MPI in a container.
 given host.*
 
 
-<a id="org43b6347"></a>
+<a id="org8538abb"></a>
 
 ### Finding Open MPI's configuration files
 
@@ -320,7 +320,7 @@ your module system sets `MPI_HOME`):
     cat ${MPI_HOME}/etc/openmpi-mca-params.conf | grep -Ev "^#|^$"
 
 
-<a id="org6f26de8"></a>
+<a id="org0e74112"></a>
 
 ### Useful MCA parameters
 
@@ -349,7 +349,7 @@ Increasing verbosity for testing:
       --mca mca_base_verbose stdout ...
 
 
-<a id="orge557851"></a>
+<a id="org9c90564"></a>
 
 ## Testing an Open MPI installation
 
@@ -364,7 +364,7 @@ The two recommended test steps are
 2.  try using `mpirun` *on the host*.
 
 
-<a id="org21d005b"></a>
+<a id="orgdae7965"></a>
 
 ### Using `mpirun` in the container
 
@@ -393,7 +393,7 @@ with `hostname` and `pid` replaced with the host name and `pid` with
 the process ID.
 
 
-<a id="org830edef"></a>
+<a id="orge74dc92"></a>
 
 ### Using `mpirun` on the host
 
@@ -422,7 +422,7 @@ This command should produce the same output as the one above (`mpirun`
 in the container).
 
 
-<a id="org40333f5"></a>
+<a id="org91eb83f"></a>
 
 # To do
 
@@ -430,20 +430,26 @@ in the container).
     newer).
 -   Document building containers using MPICH instead of Open MPI
     (probably [MVAPICH](https://mvapich.cse.ohio-state.edu/)).
--   Update to use UCX (and `libfabric`?).
+-   Update to use [UCX](https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx) (and `libfabric`?).
 -   Make sure that the list of packages in `base.def` does not include
     anything unnecessary.
 
 
-<a id="orgb7ff5af"></a>
+<a id="org810bcd9"></a>
 
-# Acknowledgements
+# Acknowledgments
+
+This work was inspired by [a blog post by Magnus Hagdorn at the
+University of Edinburgh](https://blogs.ed.ac.uk/mhagdorn/2020/08/14/using-singularity-to-containerise-a-scientific-model/).
 
 I'd like to thank [Research Computing Systems staff at UAF](https://www.gi.alaska.edu/services/research-computing-systems) and [NASA
 Advanced Supercomputing (NAS) Division support staff](https://nas.nasa.gov/) for their help.
-This work was inspired by [a blog post by Magnus Hagdorn at the
-University of Edinburgh](https://blogs.ed.ac.uk/mhagdorn/2020/08/14/using-singularity-to-containerise-a-scientific-model/). The specific output of "MPI Hello World"
-(included here) is inspired by the [recording of the 2022-1-6
-Singularity CE community meeting](https://youtu.be/jl2cT9gkxwo). Details regarding building Open MPI
-in a way that support Slurm come from the same recording.
+
+The specific output of "MPI Hello World" (included here) is inspired
+by the [recording of the 2022-1-6 Singularity CE community meeting](https://youtu.be/jl2cT9gkxwo).
+Details regarding building Open MPI in a way that support Slurm come
+from the same recording.
+
+Some of the ideas come from the discussion of the
+[Apptainer/singularity issue 876](https://github.com/apptainer/singularity/issues/876).
 
