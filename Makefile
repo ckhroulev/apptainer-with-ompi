@@ -1,13 +1,13 @@
-INTERMEDIATE=base.sif build.sif base-ompi.sif
-.INTERMEDIATE: ${INTERMEDIATE}
-
-base.sif: base.def
-
 openmpi.sif: base.sif scripts/openmpi.sh
+
+README.md:
 
 %.sif: %.def
 	singularity build --fakeroot --force $@ $<
 
+%.md: %.org
+	emacs $< --batch -f org-md-export-to-markdown --kill
+
 .PHONY: clean
 clean:
-	rm -f ${INTERMEDIATE}
+	rm -f base.sif
