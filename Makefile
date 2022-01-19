@@ -1,6 +1,7 @@
-openmpi.sif: base.sif scripts/openmpi.sh
+openmpi.sif: base.sif scripts/openmpi.sh src/mpi_hello.c
 
-README.md:
+README.md: notes.md
+	mv $< $@
 
 %.sif: %.def
 	singularity build --fakeroot --force $@ $<

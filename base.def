@@ -1,39 +1,36 @@
 # This image contains libraries needed to support InfiniBand *and
 # nothing else*.
 #
-# Development tools and other dependencies should be installed later.
-#
-# CentOS 7 uses GCC 4.8.5 that supports C++11 (needed by PISM) and
-# glibc old enough (2.17) to work with older kernels (for example
-# 2.6.32 in CentOS 6.10 on Chinook).
-#
-# Note: glibc 2.26 and newer require Linux 3.2.
-
 Bootstrap: docker
 From: centos:centos7
+# CentOS 7 uses glibc old enough (2.17) to work with older kernels
+# (for example 2.6.32 in CentOS 6.10 on Chinook).
 
 %post
     yum -y update
 
-    # The packages installed here come from a list in RHEL 7 docs:
+    # Packages installed here come from a list in RHEL 7 docs:
     #
     # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages
 
-    # NOTES: first line
+    # Beginning of the block included in README.org 
     # Required
-    yum -y install rdma-core libibverbs opensm
+    yum -y install \
+        libibverbs \
+        opensm \
+        rdma-core \
+        ;
 
     # Install headers needed to build an MPI stack
     yum -y install \
-       opensm-devel \
-       rdma-core-devel \
-       ;
+        opensm-devel \
+        rdma-core-devel \
+        ;
 
     # Recommended
     #
-    # ibutils, perftest, and qperf are recommended as well, but they
-    # pull in a long list of dependencies and so I removed them from
-    # the list to reduce the size of the image.
+    # ibutils, perftest, and qperf are recommended as well. They are
+    # not included here to reduce the size of the image.
     yum -y install \
         ibacm \
         infiniband-diags \
@@ -41,11 +38,12 @@ From: centos:centos7
         librdmacm \
         librdmacm-utils \
         ;
-    # NOTES: last line
+    # End of the block included in README.org
 
-    # Open MPI 4.0 and newer uses UCX to support InfiniBand devices.
+    # Open MPI 4.x uses UCX to support InfiniBand devices.
     #
-    # One could avoid UCX by setting the MCA parameter btl_openib_allow_ib.
+    # One could avoid installing UCX by setting the MCA parameter
+    # btl_openib_allow_ib.
 
     # This was recommended by UAF RCS, along with libevent and hwloc.
     # However, libevent and hwloc versions bundled with recent

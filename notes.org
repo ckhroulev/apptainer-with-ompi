@@ -12,6 +12,27 @@ Proper MPI support requires attention to two issues:
 Apptainer supports both widely used MPI implementations ([[https://www.open-mpi.org/][Open MPI]] and
 [[https://www.mpich.org/][MPICH]]), but these notes focus on Open MPI.
 
+The image is built in 2 steps:
+
+1. The base image =base.sif= containing support libraries for the
+   network hardware and utilities needed to test if it works.
+2. The final image =openmpi.sif= includes everything in =base.sif=,
+   the Open MPI installation in =/var/ompi=, and the "MPI Hello World"
+   program =/opt/mpi_hello= used to test Open MPI.
+
+   All the commands needed to build Open MPI are in a Bash script
+   =scripts/openmpi.sh=. This script can be used to build the matching
+   Open MPI version on the host.
+
+Run =make= to build both images.
+
+This separation makes it easier to separate issues related to version
+compatibility from ones related to hardware support.
+
+The definition files =base.def= and =openmpi.def= should be minimal.
+There are no unnecessary software packages, no environment variables.
+They document a minimal working setup.
+
 My hope is that this write up may save you some time; at least it
 should make it easier to ask the right questions when talking to HPC
 support staff.
@@ -38,11 +59,11 @@ setup used to produce it.)
 #+attr_html: :width 800px
 #+CAPTION: Compatibility between container and host Open MPI versions
 #+NAME:   fig:ompi-version-compatibility
-[[file:compatibility-grid.png]]
+[[file:version_compatibility/grid.png]]
 
 Based on this I would recommend using Open MPI version 4.0.0 or newer
 in the container because these versions are compatible with Open MPI
-3.0.3 and newer on the host.
+3.0.3 and newer on the host. Your mileage may vary.
 
 *** Compatibility between Open MPI and its dependencies
 
@@ -65,7 +86,7 @@ The relevant threshold is this: /glibc 2.26 and newer require Linux
 3.2./
 
 For example, given a host that runs CentOS 6.10, [[https://distrowatch.com/table.php?distribution=centos][this DistroWatch.com
- page]] shows that it uses Linux 2.6.32.
+page]] shows that it uses Linux 2.6.32.
 
 To build a container that would run on this host we need to pick a
 Linux distribution version that
@@ -87,7 +108,7 @@ support libraries are needed.
 RHEL 7 documentation lists [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related software
 packages]].
 
-#+include: base.def example :lines "23-44"
+#+include: base.def example :lines "17-41"
 
 Note: recommended packages =libibverbs-utils= and =infiniband-diags=
 are used to test InfiniBand support below.
@@ -341,7 +362,26 @@ in the container).
 
 * To do
 
-- Supporting hosts that use Slurm (e.g. installing the appropriate
-  PMIx version).
-- Using MPICH (probably [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]).
-- Update to use UCX and =libfabric=
+- Supporting hosts that use Slurm (install =munge= and PMIx 3.2.2 or
+  newer).
+- Document building containers using MPICH instead of Open MPI
+  (probably [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]).
+- Update to use UCX (and =libfabric=?).
+- Make sure that the list of packages in =base.def= does not include
+  anything unnecessary.
+
+* Acknowledgments
+
+This work was inspired by [[https://blogs.ed.ac.uk/mhagdorn/2020/08/14/using-singularity-to-containerise-a-scientific-model/][a blog post by Magnus Hagdorn at the
+University of Edinburgh]].
+
+I'd like to thank [[https://www.gi.alaska.edu/services/research-computing-systems][Research Computing Systems staff at UAF]] and [[https://nas.nasa.gov/][NASA
+Advanced Supercomputing (NAS) Division support staff]] for their help.
+
+The specific output of "MPI Hello World" (included here) is inspired
+by the [[https://youtu.be/jl2cT9gkxwo][recording of the 2022-1-6 Singularity CE community meeting]].
+Details regarding building Open MPI in a way that support Slurm come
+from the same recording.
+
+Some of the ideas come from the discussion of the
+[[https://github.com/apptainer/singularity/issues/876][Apptainer/singularity issue 876]].

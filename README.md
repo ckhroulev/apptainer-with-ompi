@@ -1,21 +1,22 @@
 
 # Table of Contents
 
-1.  [Software compatibility](#org734f7b8)
-    1.  [Open MPI](#org59f4537)
-        1.  [Compatibility between Open MPI and its dependencies](#orgf27bccb)
-    2.  [Compatibility between the host kernel and the container OS](#org7b0e951)
-2.  [InfiniBand and RDMA support](#org2761db3)
-    1.  [Checking if IB devices are available](#org853eb91)
-    2.  [Checking inter-node communication using IB](#org98935ef)
-3.  [Building Open MPI](#org34ba292)
-    1.  [Configuring Open MPI](#orgb9ef682)
-        1.  [Finding Open MPI's configuration files](#orga11e81e)
-        2.  [Useful MCA parameters](#org594215d)
-    2.  [Testing an Open MPI installation](#org519c5b9)
-        1.  [Using `mpirun` in the container](#org36d676e)
-        2.  [Using `mpirun` on the host](#orga84df4a)
-4.  [To do](#orgae23723)
+1.  [Software compatibility](#orgc1c1be9)
+    1.  [Open MPI](#org76f8f70)
+        1.  [Compatibility between Open MPI and its dependencies](#org18bf774)
+    2.  [Compatibility between the host kernel and the container OS](#orgb26193b)
+2.  [InfiniBand and RDMA support](#orga0f9dbd)
+    1.  [Checking if IB devices are available](#orgadc15cb)
+    2.  [Checking inter-node communication using IB](#orgacb0dc0)
+3.  [Building Open MPI](#org307bbae)
+    1.  [Configuring Open MPI](#orga6dfda2)
+        1.  [Finding Open MPI's configuration files](#org43b6347)
+        2.  [Useful MCA parameters](#org6f26de8)
+    2.  [Testing an Open MPI installation](#orge557851)
+        1.  [Using `mpirun` in the container](#org21d005b)
+        2.  [Using `mpirun` on the host](#org830edef)
+4.  [To do](#org40333f5)
+5.  [Acknowledgements](#orgb7ff5af)
 
 These notes document my attempt to build an [Apptainer](https://apptainer.org/) (or
 [SingularityCE](https://sylabs.io/singularity/)) base container that can be used to run MPI-based
@@ -29,6 +30,27 @@ Proper MPI support requires attention to two issues:
 Apptainer supports both widely used MPI implementations ([Open MPI](https://www.open-mpi.org/) and
 [MPICH](https://www.mpich.org/)), but these notes focus on Open MPI.
 
+The image is built in 2 steps:
+
+1.  The base image `base.sif` containing support libraries for the
+    network hardware and utilities needed to test if it works.
+2.  The final image `openmpi.sif` includes everything in `base.sif`,
+    the Open MPI installation in `/var/ompi`, and the "MPI Hello World"
+    program `/opt/mpi_hello` used to test Open MPI.
+    
+    All the commands needed to build Open MPI are in a Bash script
+    `scripts/openmpi.sh`. This script can be used to build the matching
+    Open MPI version on the host.
+
+Run `make` to build both images.
+
+This separation makes it easier to separate issues related to version
+compatibility from ones related to hardware support.
+
+The definition files `base.def` and `openmpi.def` should be minimal.
+There are no unnecessary software packages, no environment variables.
+They document a minimal working setup.
+
 My hope is that this write up may save you some time; at least it
 should make it easier to ask the right questions when talking to HPC
 support staff.
@@ -37,12 +59,12 @@ Edits (however minor), corrections, improvements, etc are always
 welcome.
 
 
-<a id="org734f7b8"></a>
+<a id="orgc1c1be9"></a>
 
 # Software compatibility
 
 
-<a id="org59f4537"></a>
+<a id="org76f8f70"></a>
 
 ## Open MPI
 
@@ -58,14 +80,14 @@ The plot below shows which Open MPI version combinations appear to be
 compatible. (See [github.com/ckhroulev/apptainer-with-ompi](https://github.com/ckhroulev/apptainer-with-ompi) for the
 setup used to produce it.)
 
-![img](compatibility-grid.png "Compatibility between container and host Open MPI versions")
+![img](version_compatibility/grid.png "Compatibility between container and host Open MPI versions")
 
 Based on this I would recommend using Open MPI version 4.0.0 or newer
 in the container because these versions are compatible with Open MPI
 3.0.3 and newer on the host.
 
 
-<a id="orgf27bccb"></a>
+<a id="org18bf774"></a>
 
 ### Compatibility between Open MPI and its dependencies
 
@@ -79,7 +101,7 @@ distribution that is significantly older than the chosen Open MPI
 version.
 
 
-<a id="org7b0e951"></a>
+<a id="orgb26193b"></a>
 
 ## Compatibility between the host kernel and the container OS
 
@@ -91,7 +113,7 @@ The relevant threshold is this: *glibc 2.26 and newer require Linux
 3.2.*
 
 For example, given a host that runs CentOS 6.10, [this DistroWatch.com
- page](https://distrowatch.com/table.php?distribution=centos) shows that it uses Linux 2.6.32.
+page](https://distrowatch.com/table.php?distribution=centos) shows that it uses Linux 2.6.32.
 
 To build a container that would run on this host we need to pick a
 Linux distribution version that
@@ -105,7 +127,7 @@ In this particular case CentOS 7 should work: it uses `glibc` 2.17 and
 is supported until June of 2024.
 
 
-<a id="org2761db3"></a>
+<a id="orga0f9dbd"></a>
 
 # InfiniBand and RDMA support
 
@@ -117,19 +139,22 @@ RHEL 7 documentation lists [InfiniBand and RDMA related software
 packages](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages).
 
     # Required
-    yum -y install rdma-core libibverbs opensm
+    yum -y install \
+        libibverbs \
+        opensm \
+        rdma-core \
+        ;
     
     # Install headers needed to build an MPI stack
     yum -y install \
-       opensm-devel \
-       rdma-core-devel \
-       ;
+        opensm-devel \
+        rdma-core-devel \
+        ;
     
     # Recommended
     #
-    # ibutils, perftest, and qperf are recommended as well, but they
-    # pull in a long list of dependencies and so I removed them from
-    # the list to reduce the size of the image.
+    # ibutils, perftest, and qperf are recommended as well. They are
+    # not included here to reduce the size of the image.
     yum -y install \
         ibacm \
         infiniband-diags \
@@ -142,7 +167,7 @@ Note: recommended packages `libibverbs-utils` and `infiniband-diags`
 are used to test InfiniBand support below.
 
 
-<a id="org853eb91"></a>
+<a id="orgadc15cb"></a>
 
 ## Checking if IB devices are available
 
@@ -187,7 +212,7 @@ Without IB devices:
     ibpanic: [2137592] main: stat of IB device 'mthca0' failed: No such file or directory
 
 
-<a id="org98935ef"></a>
+<a id="orgacb0dc0"></a>
 
 ## Checking inter-node communication using IB
 
@@ -218,7 +243,7 @@ Next, use the `hostname` output from above (here: `n2`) to run
     1000 iters in 0.01 seconds = 6.80 usec/iter
 
 
-<a id="org34ba292"></a>
+<a id="org307bbae"></a>
 
 # Building Open MPI
 
@@ -246,7 +271,7 @@ Run
 *after* the build is complete to check if `openib` support was included.
 
 
-<a id="orgb9ef682"></a>
+<a id="orga6dfda2"></a>
 
 ## Configuring Open MPI
 
@@ -276,7 +301,7 @@ Open MPI in a container.
 given host.*
 
 
-<a id="orga11e81e"></a>
+<a id="org43b6347"></a>
 
 ### Finding Open MPI's configuration files
 
@@ -295,7 +320,7 @@ your module system sets `MPI_HOME`):
     cat ${MPI_HOME}/etc/openmpi-mca-params.conf | grep -Ev "^#|^$"
 
 
-<a id="org594215d"></a>
+<a id="org6f26de8"></a>
 
 ### Useful MCA parameters
 
@@ -324,7 +349,7 @@ Increasing verbosity for testing:
       --mca mca_base_verbose stdout ...
 
 
-<a id="org519c5b9"></a>
+<a id="orge557851"></a>
 
 ## Testing an Open MPI installation
 
@@ -339,7 +364,7 @@ The two recommended test steps are
 2.  try using `mpirun` *on the host*.
 
 
-<a id="org36d676e"></a>
+<a id="org21d005b"></a>
 
 ### Using `mpirun` in the container
 
@@ -368,7 +393,7 @@ with `hostname` and `pid` replaced with the host name and `pid` with
 the process ID.
 
 
-<a id="orga84df4a"></a>
+<a id="org830edef"></a>
 
 ### Using `mpirun` on the host
 
@@ -397,12 +422,28 @@ This command should produce the same output as the one above (`mpirun`
 in the container).
 
 
-<a id="orgae23723"></a>
+<a id="org40333f5"></a>
 
 # To do
 
--   Supporting hosts that use Slurm (e.g. installing the appropriate
-    PMIx version).
--   Using MPICH (probably [MVAPICH](https://mvapich.cse.ohio-state.edu/)).
--   Update to use UCX and `libfabric`
+-   Supporting hosts that use Slurm (install `munge` and PMIx 3.2.2 or
+    newer).
+-   Document building containers using MPICH instead of Open MPI
+    (probably [MVAPICH](https://mvapich.cse.ohio-state.edu/)).
+-   Update to use UCX (and `libfabric`?).
+-   Make sure that the list of packages in `base.def` does not include
+    anything unnecessary.
+
+
+<a id="orgb7ff5af"></a>
+
+# Acknowledgements
+
+I'd like to thank [Research Computing Systems staff at UAF](https://www.gi.alaska.edu/services/research-computing-systems) and [NASA
+Advanced Supercomputing (NAS) Division support staff](https://nas.nasa.gov/) for their help.
+This work was inspired by [a blog post by Magnus Hagdorn at the
+University of Edinburgh](https://blogs.ed.ac.uk/mhagdorn/2020/08/14/using-singularity-to-containerise-a-scientific-model/). The specific output of "MPI Hello World"
+(included here) is inspired by the [recording of the 2022-1-6
+Singularity CE community meeting](https://youtu.be/jl2cT9gkxwo). Details regarding building Open MPI
+in a way that support Slurm come from the same recording.
 

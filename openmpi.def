@@ -1,4 +1,4 @@
-# Install MPI
+# Install Open MPI
 Bootstrap: localimage
 From: ./base.sif
 Stage: build
@@ -8,6 +8,7 @@ Stage: build
     ./src/mpi_hello.c /opt/
 
 %post
+    # Install build tools
     yum -y install \
        gcc \
        gcc-c++ \
@@ -39,3 +40,8 @@ Stage: install
 %files from build
     /opt/ /
 
+%post
+    yum clean all
+
+%runscript
+    /opt/mpi_hello
