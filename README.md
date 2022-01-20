@@ -1,27 +1,27 @@
 
 # Table of Contents
 
-1.  [Apptainer (Singularity) containers with Open MPI and InfiniBand](#org1396cf2)
-2.  [Software compatibility](#org6448a56)
-    1.  [Open MPI](#orgd48c8a1)
-        1.  [Compatibility between Open MPI and its dependencies](#org83d5870)
-    2.  [Compatibility between the host kernel and the container OS](#orgee15174)
-3.  [InfiniBand and RDMA support](#orgcc0c2a2)
-    1.  [Checking if IB devices are available](#org7b1ba71)
-    2.  [Checking inter-node communication using IB](#orgdefcb09)
-4.  [Building Open MPI](#org9ad1ba9)
-    1.  [Configuring Open MPI](#org9430e37)
-        1.  [Finding Open MPI's configuration files](#org3e7a383)
-        2.  [Useful MCA parameters](#org73d6898)
-    2.  [Testing an Open MPI installation](#org0eb9078)
-        1.  [Using `mpirun` in the container](#orgff6963f)
-        2.  [Using `mpirun` on the host](#org9dea4e2)
-5.  [To do](#orgd7de86d)
-6.  [Acknowledgments](#orgfa8e803)
+1.  [Apptainer (Singularity) containers with Open MPI and InfiniBand](#org0d4b78d)
+2.  [Software compatibility](#org15dc9a2)
+    1.  [Open MPI](#org8d8d36f)
+        1.  [Compatibility between Open MPI and its dependencies](#org9b75187)
+    2.  [Compatibility between the host kernel and the container OS](#org17c9c1b)
+3.  [InfiniBand and RDMA support](#org92621a6)
+    1.  [Checking if IB devices are available](#orgf796c3a)
+    2.  [Checking inter-node communication using IB](#org580ca56)
+4.  [Building Open MPI](#org601bb9d)
+    1.  [Configuring Open MPI](#org7c9e364)
+        1.  [Finding Open MPI's configuration files](#org5da7ecb)
+        2.  [Useful MCA parameters](#org05d9883)
+    2.  [Testing an Open MPI installation](#org35841d5)
+        1.  [Using `mpirun` in the container](#org9fabeb0)
+        2.  [Using `mpirun` on the host](#orgb66f12d)
+5.  [To do](#orge78bc83)
+6.  [Acknowledgments](#org6be481d)
 
 
 
-<a id="org1396cf2"></a>
+<a id="org0d4b78d"></a>
 
 # Apptainer (Singularity) containers with Open MPI and InfiniBand
 
@@ -66,12 +66,12 @@ Edits (however minor), corrections, improvements, etc are always
 welcome.
 
 
-<a id="org6448a56"></a>
+<a id="org15dc9a2"></a>
 
 # Software compatibility
 
 
-<a id="orgd48c8a1"></a>
+<a id="org8d8d36f"></a>
 
 ## Open MPI
 
@@ -94,7 +94,7 @@ in the container because these versions are compatible with Open MPI
 3.0.3 and newer on the host. Your mileage may vary.
 
 
-<a id="org83d5870"></a>
+<a id="org9b75187"></a>
 
 ### Compatibility between Open MPI and its dependencies
 
@@ -108,7 +108,7 @@ distribution that is significantly older than the chosen Open MPI
 version.
 
 
-<a id="orgee15174"></a>
+<a id="org17c9c1b"></a>
 
 ## Compatibility between the host kernel and the container OS
 
@@ -134,7 +134,7 @@ In this particular case CentOS 7 should work: it uses `glibc` 2.17 and
 is supported until June of 2024.
 
 
-<a id="orgcc0c2a2"></a>
+<a id="org92621a6"></a>
 
 # InfiniBand and RDMA support
 
@@ -142,19 +142,22 @@ Supporting InfiniBand in a container is not any different from the
 same task on a host. Your HPC support should be able to tell you which
 support libraries are needed.
 
+See [Mellanox OpenFabrics Enterprise Distribution for Linux](https://www.mellanox.com/products/infiniband-drivers/linux/mlnx_ofed) for binary
+packages provided by NVIDIA and [`MLNX_OFED`: Firmware - Driver
+Compatibility Matrix](https://www.mellanox.com/support/mlnx-ofed-matrix?mtag=linux_sw_drivers) to see which driver version is needed for a
+particular model of the interconnect.
+
 RHEL 7 documentation lists [InfiniBand and RDMA related software
 packages](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages).
 
     # Required
     yum -y install \
         libibverbs \
-        opensm \
         rdma-core \
         ;
     
     # Install headers needed to build an MPI stack
     yum -y install \
-        opensm-devel \
         rdma-core-devel \
         ;
     
@@ -169,12 +172,13 @@ packages](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux
         librdmacm \
         librdmacm-utils \
         ;
+    # End of the block included in README
 
 Note: recommended packages `libibverbs-utils` and `infiniband-diags`
 are used to test InfiniBand support below.
 
 
-<a id="org7b1ba71"></a>
+<a id="orgf796c3a"></a>
 
 ## Checking if IB devices are available
 
@@ -219,7 +223,7 @@ Without IB devices:
     ibpanic: [2137592] main: stat of IB device 'mthca0' failed: No such file or directory
 
 
-<a id="orgdefcb09"></a>
+<a id="org580ca56"></a>
 
 ## Checking inter-node communication using IB
 
@@ -250,7 +254,7 @@ Next, use the `hostname` output from above (here: `n2`) to run
     1000 iters in 0.01 seconds = 6.80 usec/iter
 
 
-<a id="org9ad1ba9"></a>
+<a id="org601bb9d"></a>
 
 # Building Open MPI
 
@@ -278,7 +282,7 @@ Run
 *after* the build is complete to check if `openib` support was included.
 
 
-<a id="org9430e37"></a>
+<a id="org7c9e364"></a>
 
 ## Configuring Open MPI
 
@@ -308,7 +312,7 @@ Open MPI in a container.
 given host.*
 
 
-<a id="org3e7a383"></a>
+<a id="org5da7ecb"></a>
 
 ### Finding Open MPI's configuration files
 
@@ -327,7 +331,7 @@ your module system sets `MPI_HOME`):
     cat ${MPI_HOME}/etc/openmpi-mca-params.conf | grep -Ev "^#|^$"
 
 
-<a id="org73d6898"></a>
+<a id="org05d9883"></a>
 
 ### Useful MCA parameters
 
@@ -351,12 +355,10 @@ Open MPI 4.x with UCX (from <https://docs.hpc.udel.edu/technical/whitepaper/darw
 
 Increasing verbosity for testing:
 
-    mpirun \
-      --mca btl_base_verbose 100 \
-      --mca mca_base_verbose stdout ...
+    mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout ...
 
 
-<a id="org0eb9078"></a>
+<a id="org35841d5"></a>
 
 ## Testing an Open MPI installation
 
@@ -371,7 +373,7 @@ The two recommended test steps are
 2.  try using `mpirun` *on the host*.
 
 
-<a id="orgff6963f"></a>
+<a id="org9fabeb0"></a>
 
 ### Using `mpirun` in the container
 
@@ -400,7 +402,7 @@ with `hostname` and `pid` replaced with the host name and `pid` with
 the process ID.
 
 
-<a id="org9dea4e2"></a>
+<a id="orgb66f12d"></a>
 
 ### Using `mpirun` on the host
 
@@ -429,7 +431,7 @@ This command should produce the same output as the one above (`mpirun`
 in the container).
 
 
-<a id="orgd7de86d"></a>
+<a id="orge78bc83"></a>
 
 # To do
 
@@ -437,12 +439,12 @@ in the container).
     newer).
 -   Document building containers using MPICH instead of Open MPI
     (probably [MVAPICH](https://mvapich.cse.ohio-state.edu/)).
--   Update to use [UCX](https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx) (and `libfabric`?).
+-   Update to use [UCX](https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx) (and `libfabric`?). See [Running UCX](https://openucx.readthedocs.io/en/master/running.html#running-mpi) for more info.
 -   Make sure that the list of packages in `base.def` does not include
     anything unnecessary.
 
 
-<a id="orgfa8e803"></a>
+<a id="org6be481d"></a>
 
 # Acknowledgments
 

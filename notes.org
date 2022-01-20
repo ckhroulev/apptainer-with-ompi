@@ -295,9 +295,7 @@ btl_tcp_if_exclude = ib0
 
 Increasing verbosity for testing:
 #+BEGIN_SRC bash
-  mpirun \
-    --mca btl_base_verbose 100 \
-    --mca mca_base_verbose stdout ...
+  mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout ...
 #+END_SRC
 
 ** Testing an Open MPI installation
@@ -373,7 +371,7 @@ in the container).
   newer).
 - Document building containers using MPICH instead of Open MPI
   (probably [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]).
-- Update to use [[https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx][UCX]] (and =libfabric=?).
+- Update to use [[https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx][UCX]] (and =libfabric=?). See [[https://openucx.readthedocs.io/en/master/running.html#running-mpi][Running UCX]] for more info.
 - Make sure that the list of packages in =base.def= does not include
   anything unnecessary.
 
