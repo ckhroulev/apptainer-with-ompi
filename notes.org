@@ -107,6 +107,11 @@ Supporting InfiniBand in a container is not any different from the
 same task on a host. Your HPC support should be able to tell you which
 support libraries are needed.
 
+See [[https://www.mellanox.com/products/infiniband-drivers/linux/mlnx_ofed][Mellanox OpenFabrics Enterprise Distribution for Linux]] for binary
+packages provided by NVIDIA and [[https://www.mellanox.com/support/mlnx-ofed-matrix?mtag=linux_sw_drivers][=MLNX_OFED=: Firmware - Driver
+Compatibility Matrix]] to see which driver version is needed for a
+particular model of the interconnect.
+
 RHEL 7 documentation lists [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related software
 packages]].
 

@@ -17,13 +17,11 @@ From: centos:centos7
     # Required
     yum -y install \
         libibverbs \
-        opensm \
         rdma-core \
         ;
 
     # Install headers needed to build an MPI stack
     yum -y install \
-        opensm-devel \
         rdma-core-devel \
         ;
 
