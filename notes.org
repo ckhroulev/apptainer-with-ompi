@@ -382,7 +382,7 @@ Advanced Supercomputing (NAS) Division support staff]] for their help.
 The specific output of "MPI Hello World" used here is inspired by
 Singularity docs and the [[https://youtu.be/jl2cT9gkxwo][recording of the 2022-1-6 Singularity CE
 community meeting]]. Details regarding building Open MPI in a way that
-support Slurm come from the same recording.
+supports Slurm come from the same recording.
 
 Some of the ideas come from the discussion of the
 [[https://github.com/apptainer/singularity/issues/876][Apptainer/singularity issue 876]].
