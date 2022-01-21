@@ -67,6 +67,9 @@ Based on this I would recommend using Open MPI version 4.0.0 or newer
 in the container because these versions are compatible with Open MPI
 3.0.3 and newer on the host. Your mileage may vary.
 
+Note, also, that [[https://www.open-mpi.org/software/ompi/major-changes.php][Open MPI 4.1.x is ABI compatible with 4.0.x and 4.0.x
+is ABI compatible with 3.1.x and 3.0.x]].
+
 *** Compatibility between Open MPI and its dependencies
 
 It is worth pointing out that Open MPI relies on external libraries
@@ -295,7 +298,13 @@ btl_tcp_if_exclude = ib0
 
 Increasing verbosity for testing:
 #+BEGIN_SRC bash
-  mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout ...
+    mpirun --mca btl_base_verbose 100 \
+           --mca btl_openib_verbose 1 \
+           --mca plm_base_verbose 100 \
+           --mca mca_base_verbose stdout \
+           --mca pml_ob1_verbose 9 \
+           --mca pml_ucx_verbose 9 \
+           ...
 #+END_SRC
 
 ** Testing an Open MPI installation
@@ -372,6 +381,22 @@ in the container).
 - Document building containers using MPICH instead of Open MPI
   (probably [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]).
 - Update to use [[https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx][UCX]] (and =libfabric=?). See [[https://openucx.readthedocs.io/en/master/running.html#running-mpi][Running UCX]] for more info.
+
+  Add =--mca pml_base_verbose 100= to verbosity options (to check if
+  UCX *is* actually used).
+
+  Build Open MPI =--without-verbs= to [[https://www.open-mpi.org/faq/?category=openfabrics#ofa-device-error][avoid an error message about
+  device initialization]].
+
+#+BEGIN_EXAMPLE
+  --------------------------------------------------------------------------
+  WARNING: There was an error initializing an OpenFabrics device.
+
+    Local host:   chinook01
+    Local device: mlx4_0
+  --------------------------------------------------------------------------
+#+END_EXAMPLE
+  
 - Make sure that the list of packages in =base.def= does not include
   anything unnecessary.
 
