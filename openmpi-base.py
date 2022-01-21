@@ -16,11 +16,18 @@ Stage0 += mlnx_ofed(version='4.7-3.2.9.0')
 compiler = gnu()
 Stage0 += compiler
 
+use_ucx = USERARG.get('ucx', None) is not None
+
+if use_ucx:
+    # UCX depends on KNEM (use latest versions as of 2022-01-22)
+    Stage0 += knem(version='1.1.4')
+    Stage0 += ucx(cuda=False, version='1.12.0')
+
 # Build Open MPI 4.1.2 with UCX. Note that we set 'infiniband=True'
 # to use the openib BTL.
 Stage0 += openmpi(cuda=False,
-                  infiniband=True,
-                  ucx=False,
+                  infiniband=not use_ucx,
+                  ucx=use_ucx,
                   toolchain=compiler.toolchain,
                   version='4.1.2')
 
@@ -29,9 +36,19 @@ Stage0 += copy(src='src/mpi_hello.c', dest='/opt/mpi_hello.c')
 Stage0 += shell(commands=[
     'mpicc -o /opt/mpi_hello /opt/mpi_hello.c'])
 
+# Build the MPI-1 part of Intel's MPI Benchmarks:
+Stage0 += shell(commands=[
+    'mkdir -p /var/tmp'
+    'cd /var/tmp/',
+    'wget -nc https://github.com/intel/mpi-benchmarks/archive/refs/tags/IMB-v2021.3.tar.gz',
+    'tar xzf IMB-v2021.3.tar.gz',
+    'cd mpi-benchmarks-IMB-v2021.3/',
+    'CC=mpicc CXX=mpicxx make IMB-MPI1',
+    'cp IMB-MPI1 /opt/'])
+
 # Reduce the image size by starting from a blank base image:
 Stage1 += baseimage(image='centos:centos7')
 Stage1 += Stage0.runtime()
 Stage1 += copy(_from="devel",
-               src='/opt/mpi_hello',
+               src=['/opt/mpi_hello', '/opt/IMB-MPI1'],
                dest='/usr/local/bin/')

@@ -1,10 +1,13 @@
 openmpi.sif: base.sif scripts/openmpi.sh src/mpi_hello.c
 
 openmpi-base.sif:
-openmpi-base.def:
-
 openmpi-base-ucx.sif:
-openmpi-base-ucx.def:
+
+openmpi-base.def: openmpi-base.py
+	hpccm --recipe $< --format singularity --singularity-version 3.8 > $@
+
+openmpi-base-ucx.def: openmpi-base.py
+	hpccm --recipe $< --format singularity --singularity-version 3.8 --userarg ucx=1 > $@
 
 README.md: notes.md
 	mv $< $@
@@ -14,9 +17,6 @@ README.md: notes.md
 
 %.md: %.org
 	emacs $< --batch -f org-md-export-to-markdown --kill
-
-%.def: %.py
-	hpccm --recipe $< --format singularity --singularity-version 3.8 > $@
 
 .PHONY: clean
 clean:
