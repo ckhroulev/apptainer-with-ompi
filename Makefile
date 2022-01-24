@@ -1,7 +1,6 @@
 openmpi.sif: base.sif scripts/openmpi.sh src/mpi_hello.c
 
 openmpi-base.sif:
-openmpi-base-ucx.sif:
 
 openmpi-base.def: openmpi-base.py
 	hpccm --recipe $< --format singularity --singularity-version 3.8 > $@

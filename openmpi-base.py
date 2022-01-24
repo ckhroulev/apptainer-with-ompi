@@ -23,13 +23,16 @@ if use_ucx:
     Stage0 += knem(version='1.1.4')
     Stage0 += ucx(cuda=False, version='1.12.0')
 
-# Build Open MPI 4.1.2 with UCX. Note that we set 'infiniband=True'
-# to use the openib BTL.
+# Build Open MPI 4.1.2.
 Stage0 += openmpi(cuda=False,
                   infiniband=not use_ucx,
                   ucx=use_ucx,
                   toolchain=compiler.toolchain,
                   version='4.1.2')
+
+if not use_ucx:
+    Stage0 += shell(commands=[
+        'echo "btl_openib_allow_ib = 1" >> /usr/local/openmpi/etc/openmpi-mca-params.conf'])
 
 # Build "MPI Hello World" that can be used to test this image:
 Stage0 += copy(src='src/mpi_hello.c', dest='/opt/mpi_hello.c')
@@ -40,11 +43,13 @@ Stage0 += shell(commands=[
 Stage0 += shell(commands=[
     'mkdir -p /var/tmp'
     'cd /var/tmp/',
-    'wget -nc https://github.com/intel/mpi-benchmarks/archive/refs/tags/IMB-v2021.3.tar.gz',
+    'wget https://github.com/intel/mpi-benchmarks/archive/refs/tags/IMB-v2021.3.tar.gz',
     'tar xzf IMB-v2021.3.tar.gz',
     'cd mpi-benchmarks-IMB-v2021.3/',
     'CC=mpicc CXX=mpicxx make IMB-MPI1',
-    'cp IMB-MPI1 /opt/'])
+    'cp IMB-MPI1 /opt/',
+    'cd /var/tmp',
+    'rm -rf mpi-benchmarks-IMB-v2021.3 IMB-v2021.3.tar.gz'])
 
 # Reduce the image size by starting from a blank base image:
 Stage1 += baseimage(image='centos:centos7')
