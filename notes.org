@@ -332,7 +332,7 @@ in the container).
 We use [[https://github.com/intel/mpi-benchmarks][Intel(R) MPI Benchmarks 2021.3]] to compare Open MPI performance
 when using the container versus the host MPI.
 
-It is easy to build using MPI wrappers for the C++ compiler (see
+It is easy to build using MPI compiler wrappers (see
 [[file:benchmarking/build-imb.sh][=benchmarking/build-imb.sh=]]):
 
 #+include: benchmarking/build-imb.sh src bash :lines "9-"
@@ -344,7 +344,7 @@ mpirun -n 2 singularity exec openmpi-base.sif IMB-MPI1 Sendrecv > imb-container.
 #+end_src
 and compare the logs this produces.
 
-For large message sizes the thoughput reported by the benchmark should
+For large message sizes the throughput reported by the benchmark should
 be close to what's listed in the specs and to the number obtained
 using =ibv_rc_pingpong= above.
 
@@ -464,4 +464,15 @@ supports Slurm come from the same recording.
 Some of the ideas come from the discussion of the
 [[https://github.com/apptainer/singularity/issues/876][Apptainer/singularity issue 876]].
 
-#  LocalWords:  InfiniBand
+#  LocalWords:  InfiniBand Apptainer MPI SingularityCE HPC todo MPICH
+#  LocalWords:  MVAPICH IB openmpi sif Mellanox OpenFabrics MLNX OFED
+#  LocalWords:  RHEL RDMA libibverbs utils ibv rc pingpong GUID mlx
+#  LocalWords:  cfe ibstat infiniband diags LinkUp LMC ibpanic mthca
+#  LocalWords:  Slurm SRC srun pty hostname QPN PSN GID Mbit iters Ev
+#  LocalWords:  usec iter UCX openib BTL ompi parsable mca MCA mpirun
+#  LocalWords:  filesystem sysconf MPI's param TCP btl vader ib Init
+#  LocalWords:  stdout mpi pid rdmacm CPC init benchmarking src IMB
+#  LocalWords:  Sendrecv imb GPUs baseimage centos devel ofed cuda px
+#  LocalWords:  toolchain readme HPCCM hpccm Makefile attr html PMIx
+#  LocalWords:  ABI glibc CentOS DistroWatch Magnus Hagdorn UAF NAS
+#  LocalWords:  Supercomputing
