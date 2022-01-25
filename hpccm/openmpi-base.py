@@ -39,7 +39,7 @@ Stage0 += copy(src='mpi_hello.c', dest='/opt/mpi_hello.c')
 Stage0 += shell(commands=[
     'mpicc -o /opt/mpi_hello /opt/mpi_hello.c'])
 
-# Build the MPI-1 part of Intel's MPI Benchmarks:
+# Build Intel's MPI Benchmarks:
 Stage0 += shell(commands=[
     'mkdir -p /var/tmp'
     'cd /var/tmp/',
