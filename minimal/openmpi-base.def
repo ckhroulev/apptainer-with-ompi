@@ -23,12 +23,24 @@ Stage: build
 
     ompi_mca_params=${ompi_prefix}/etc/openmpi-mca-params.conf
 
-    # Do not use tcp:
-    echo "btl = vader,self,openib" >> ${ompi_mca_params}
-    # Use openib without ucx in Open MPI 4.0 and later:
+    # Allow using the openib btl (this is needed by Open MPI 4.x built
+    # without UCX):
     echo "btl_openib_allow_ib = 1" >> ${ompi_mca_params}
 
     ${ompi_prefix}/bin/mpicc /opt/mpi_hello.c -o /opt/mpi_hello
+
+    # Build the MPI-1 part of Intel's MPI benchmark:
+    mkdir -p /var/tmp && cd /var/tmp
+
+    wget https://github.com/intel/mpi-benchmarks/archive/refs/tags/IMB-v2021.3.tar.gz
+
+    tar xzf IMB-v2021.3.tar.gz && cd mpi-benchmarks-IMB-v2021.3
+
+    CC=${ompi_prefix}/bin/mpicc CXX=${ompi_prefix}/bin/mpicxx make IMB-MPI1
+
+    cp IMB-MPI1 /opt/
+
+    cd .. && rm -rf mpi-benchmarks-IMB-v2021.3 IMB-v2021.3.tar.gz
 
 Bootstrap: localimage
 From: ./base.sif
