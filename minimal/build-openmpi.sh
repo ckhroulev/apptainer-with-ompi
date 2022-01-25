@@ -13,9 +13,9 @@ set -e
 set -u
 set -x
 
-prefix=${prefix:-/opt/ompi}
+prefix=${prefix:-/usr/local/openmpi}
 build_dir=${build_dir:-/tmp/build/ompi}
-version=${version:-4.0.5}
+version=${version:-4.1.2}
 
 mkdir -p ${build_dir}
 
@@ -32,5 +32,5 @@ cd openmpi-${version}
             --prefix=${prefix} \
   ;
 
-make -j 8
+make -j
 make install

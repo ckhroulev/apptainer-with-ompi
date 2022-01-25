@@ -17,7 +17,7 @@ Stage: build
        wget \
        ;
 
-    export ompi_prefix=/opt/ompi
+    export ompi_prefix=/usr/local/openmpi
 
     prefix=${ompi_prefix} version=4.1.2 /opt/build-openmpi.sh
 
@@ -29,16 +29,16 @@ Stage: build
 
     ${ompi_prefix}/bin/mpicc /opt/mpi_hello.c -o /opt/mpi_hello
 
-    # Build the MPI-1 part of Intel's MPI benchmark:
+    # Build Intel's MPI benchmarks:
     mkdir -p /var/tmp && cd /var/tmp
 
     wget https://github.com/intel/mpi-benchmarks/archive/refs/tags/IMB-v2021.3.tar.gz
 
     tar xzf IMB-v2021.3.tar.gz && cd mpi-benchmarks-IMB-v2021.3
 
-    CC=${ompi_prefix}/bin/mpicc CXX=${ompi_prefix}/bin/mpicxx make IMB-MPI1
+    CC=${ompi_prefix}/bin/mpicc CXX=${ompi_prefix}/bin/mpicxx make all
 
-    cp IMB-MPI1 /opt/
+    cp IMB-* /opt/
 
     cd .. && rm -rf mpi-benchmarks-IMB-v2021.3 IMB-v2021.3.tar.gz
 
@@ -47,10 +47,12 @@ From: ./base.sif
 Stage: install
 
 %environment
-    export PATH=/opt/ompi/bin:$PATH
+    export PATH=/usr/local/openmpi/bin:$PATH
 
 %files from build
-    /opt/ /
+    /usr/local/openmpi /usr/local/openmpi
+    /opt/mpi_hello /usr/local/bin/
+    /opt/IMB-* /usr/local/bin/
 
 %post
     # GNU compiler runtime
@@ -66,4 +68,4 @@ Stage: install
     rm -rf /var/cache/yum/*
 
 %runscript
-    /opt/mpi_hello
+    mpi_hello
