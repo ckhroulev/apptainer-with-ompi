@@ -71,8 +71,8 @@ binary packages provided by NVIDIA and [[https://www.mellanox.com/support/mlnx-o
 Driver Compatibility Matrix]] to see which driver version is needed
 for a particular model of the interconnect.
 
-RHEL 7 documentation lists these [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related
-software packages]].
+RHEL 7 documentation contains a list of [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related
+software packages]] that we use here.
 
 See [[file:minimal/base.def][=minimal/base.def=]] for details.
 
@@ -273,7 +273,7 @@ The two recommended test steps are
 
 A successful run looks like this:
 #+BEGIN_EXAMPLE
-% singularity exec openmpi.sif mpirun -n 4 /opt/mpi_hello
+% singularity exec openmpi.sif mpirun -n 4 mpi_hello
 Hello from process 0/4!
 Hello from process 1/4!
 Hello from process 2/4!
@@ -283,7 +283,7 @@ Hello from process 3/4!
 We can also increase verbosity to check if Open MPI succeeded at
 initializing InfiniBand devices:
 #+BEGIN_EXAMPLE
-% singularity exec openmpi.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 /opt/mpi_hello | grep openib
+% singularity exec openmpi.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 mpi_hello | grep openib
 [hostname:pid] mca: base: components_register: found loaded component openib
 [hostname:pid] mca: base: components_register: component openib register function successful
 [hostname:pid] mca: base: components_open: found loaded component openib
@@ -303,7 +303,7 @@ the process ID.
 
 A successful run looks like this:
 #+BEGIN_EXAMPLE
-% mpirun -n 4 singularity exec openmpi.sif /opt/mpi_hello
+% mpirun -n 4 singularity exec openmpi.sif mpi_hello
 Hello from process 0/4!
 Hello from process 1/4!
 Hello from process 2/4!
@@ -320,14 +320,14 @@ To check IB initialization:
   mpirun -n 1 \
          --mca btl_base_verbose 100 \
          --mca mca_base_verbose stdout \
-         singularity exec openmpi.sif /opt/mpi_hello | grep openib
+         singularity exec openmpi.sif mpi_hello | grep openib
 #+END_SRC
 
 This command should produce the same output as the one above (=mpirun=
 in the container).
 
    
-** Comparing Open MPI performance (container vs host)
+** Comparing MPI performance (container vs host)
 
 We use [[https://github.com/intel/mpi-benchmarks][Intel(R) MPI Benchmarks 2021.3]] to compare Open MPI performance
 when using the container versus the host MPI.
@@ -371,8 +371,7 @@ a recipe as simple as this:
   Stage0 += ofed()
   compiler = gnu()
   Stage0 += compiler
-  Stage0 += openmpi(cuda=False, infiniband=True, toolchain=compiler.toolchain,
-                    version='4.1.2')
+  Stage0 += openmpi(cuda=False, infiniband=True, toolchain=compiler.toolchain, version='4.1.2')
 #+end_src
 See [[https://github.com/NVIDIA/hpc-container-maker/tree/master/docs#readme][HPCCM documentation]] for more.
 
