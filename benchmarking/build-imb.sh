@@ -17,4 +17,4 @@ cp IMB-* ..
 
 cd ..
 
-rm -rf mpi-benchmarks-IMB-v2021.3 # IMB-v2021.3.tar.gz
+rm -rf mpi-benchmarks-IMB-v2021.3 IMB-v2021.3.tar.gz
