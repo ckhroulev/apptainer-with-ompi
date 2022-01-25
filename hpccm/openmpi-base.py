@@ -46,8 +46,8 @@ Stage0 += shell(commands=[
     'wget https://github.com/intel/mpi-benchmarks/archive/refs/tags/IMB-v2021.3.tar.gz',
     'tar xzf IMB-v2021.3.tar.gz',
     'cd mpi-benchmarks-IMB-v2021.3/',
-    'CC=mpicc CXX=mpicxx make IMB-MPI1',
-    'cp IMB-MPI1 /opt/',
+    'CC=mpicc CXX=mpicxx make all',
+    'cp IMB-* /opt/',
     'cd /var/tmp',
     'rm -rf mpi-benchmarks-IMB-v2021.3 IMB-v2021.3.tar.gz'])
 
@@ -55,5 +55,5 @@ Stage0 += shell(commands=[
 Stage1 += baseimage(image='centos:centos7')
 Stage1 += Stage0.runtime()
 Stage1 += copy(_from="devel",
-               src=['/opt/mpi_hello', '/opt/IMB-MPI1'],
+               src=['/opt/mpi_hello', '/opt/IMB-*'],
                dest='/usr/local/bin/')
