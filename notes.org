@@ -11,8 +11,8 @@ Proper MPI support requires attention to two issues:
 1. compatibility between MPI libraries in the container and on a host
 2. supporting network hardware
 
-Apptainer supports both widely used MPI implementations ([[https://www.open-mpi.org/][Open MPI]] and
-[[https://www.mpich.org/][MPICH]]), but these notes focus on Open MPI.
+Apptainer supports both widely used open source MPI implementations
+([[https://www.open-mpi.org/][Open MPI]] and [[https://www.mpich.org/][MPICH]]), but these notes focus on Open MPI.
 
 The image is built in 2 steps:
 
@@ -50,7 +50,7 @@ The standard advice is "use the version installed on the host", but
 this is not always practical: we may want to support multiple hosts or
 the host may not have Open MPI installed.
 
-Moreover, we need to try to do what we can to support reproducible
+Moreover, we need to try to do what we can to simplify reproducible
 research and that may require using more current Open MPI versions
 than a certain host provides.
 
@@ -106,19 +106,24 @@ is supported until June of 2024.
 
 * InfiniBand and RDMA support 
 
-Supporting InfiniBand in a container is not any different from the
-same task on a host. Your HPC support should be able to tell you which
-support libraries are needed.
+Supporting InfiniBand in a container is not that different from the
+same task on a host. Your HPC staff should be able to tell you which
+libraries are needed.
 
 See [[https://www.mellanox.com/products/infiniband-drivers/linux/mlnx_ofed][Mellanox OpenFabrics Enterprise Distribution for Linux]] for binary
 packages provided by NVIDIA and [[https://www.mellanox.com/support/mlnx-ofed-matrix?mtag=linux_sw_drivers][=MLNX_OFED=: Firmware - Driver
 Compatibility Matrix]] to see which driver version is needed for a
 particular model of the interconnect.
 
-RHEL 7 documentation lists [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related software
+RHEL 7 documentation lists these [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related software
 packages]].
 
 #+include: base.def example :lines "17-41"
+
+#+BEGIN_QUOTE
+Some packages are needed to configure IB hardware, to update firmware,
+etc. (This is one of the differences from IB support on a host.)
+#+END_QUOTE
 
 Note: recommended packages =libibverbs-utils= and =infiniband-diags=
 are used to test InfiniBand support below.
@@ -282,18 +287,6 @@ Open MPI 4.x without UCX:
 btl = vader,self,openib
 # Use openib without UCX in Open MPI 4.0 and later:
 btl_openib_allow_ib = 1
-#+END_EXAMPLE
-
-Open MPI 4.x with UCX (from https://docs.hpc.udel.edu/technical/whitepaper/darwin_ucx_openmpi).
-#+BEGIN_EXAMPLE
-# Don't use the openib BTL
-btl = ^openib
-# Use UCX as the "pml"
-pml = ucx
-
-# Never use the IPoIB interfaces for TCP communications:
-oob_tcp_if_exclude = ib0
-btl_tcp_if_exclude = ib0
 #+END_EXAMPLE
 
 Increasing verbosity for testing:

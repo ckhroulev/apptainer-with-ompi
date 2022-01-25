@@ -35,7 +35,7 @@ if not use_ucx:
         'echo "btl_openib_allow_ib = 1" >> /usr/local/openmpi/etc/openmpi-mca-params.conf'])
 
 # Build "MPI Hello World" that can be used to test this image:
-Stage0 += copy(src='src/mpi_hello.c', dest='/opt/mpi_hello.c')
+Stage0 += copy(src='mpi_hello.c', dest='/opt/mpi_hello.c')
 Stage0 += shell(commands=[
     'mpicc -o /opt/mpi_hello /opt/mpi_hello.c'])
 

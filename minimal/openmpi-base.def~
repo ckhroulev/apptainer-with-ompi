@@ -1,0 +1,57 @@
+# Install Open MPI
+Bootstrap: localimage
+From: ./base.sif
+Stage: build
+
+%files
+    ./build-openmpi.sh /opt/
+    ./mpi_hello.c /opt/
+
+%post
+    # Install build tools
+    yum -y install \
+       gcc \
+       gcc-c++ \
+       gcc-gfortran \
+       make \
+       wget \
+       ;
+
+    export ompi_prefix=/opt/ompi
+
+    prefix=${ompi_prefix} version=4.1.2 /opt/build-openmpi.sh
+
+    ompi_mca_params=${ompi_prefix}/etc/openmpi-mca-params.conf
+
+    # Do not use tcp:
+    echo "btl = vader,self,openib" >> ${ompi_mca_params}
+    # Use openib without ucx in Open MPI 4.0 and later:
+    echo "btl_openib_allow_ib = 1" >> ${ompi_mca_params}
+
+    ${ompi_prefix}/bin/mpicc /opt/mpi_hello.c -o /opt/mpi_hello
+
+Bootstrap: localimage
+From: ./base.sif
+Stage: install
+
+%environment
+    export PATH=/opt/ompi/bin:$PATH
+
+%files from build
+    /opt/ /
+
+%post
+    # GNU compiler runtime
+    yum -y install 
+        libgfortran \
+        libgomp \
+        ;
+
+    # An SSH or RSH client is a runtime dependency of Open MPI in its
+    # default configuration.
+    yum -y install openssh-clients
+    yum clean all
+    rm -rf /var/cache/yum/*
+
+%runscript
+    /opt/mpi_hello

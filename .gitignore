@@ -1,3 +1,4 @@
 *.txt
 *.sif
 /openmpi-base.def
+/hpccm/*.def

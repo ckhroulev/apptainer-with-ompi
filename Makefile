@@ -1,5 +1,3 @@
-openmpi.sif: base.sif scripts/openmpi.sh src/mpi_hello.c
-
 README.md: notes.md
 	mv $< $@
 

@@ -4,8 +4,8 @@ From: ./base.sif
 Stage: build
 
 %files
-    ./scripts/openmpi.sh /opt/
-    ./src/mpi_hello.c /opt/
+    ./build-openmpi.sh /opt/
+    ./mpi_hello.c /opt/
 
 %post
     # Install build tools
@@ -19,7 +19,7 @@ Stage: build
 
     export ompi_prefix=/opt/ompi
 
-    prefix=${ompi_prefix} version=4.1.2 /opt/openmpi.sh
+    prefix=${ompi_prefix} version=4.1.2 /opt/build-openmpi.sh
 
     ompi_mca_params=${ompi_prefix}/etc/openmpi-mca-params.conf
 
@@ -41,6 +41,12 @@ Stage: install
     /opt/ /
 
 %post
+    # GNU compiler runtime
+    yum -y install \
+        libgfortran \
+        libgomp \
+        ;
+
     # An SSH or RSH client is a runtime dependency of Open MPI in its
     # default configuration.
     yum -y install openssh-clients
