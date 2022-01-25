@@ -1,138 +1,93 @@
 #+TITLE: Apptainer (Singularity) containers with MPI
 
-* Apptainer (Singularity) containers with Open MPI and InfiniBand
-
 These notes document my attempt to build an [[https://apptainer.org/][Apptainer]] (or
 [[https://sylabs.io/singularity/][SingularityCE]]) base container that can be used to run MPI-based
 software in "hybrid" mode.
 
-Proper MPI support requires attention to two issues:
-
-1. compatibility between MPI libraries in the container and on a host
-2. supporting network hardware
-
-Apptainer supports both widely used open source MPI implementations
-([[https://www.open-mpi.org/][Open MPI]] and [[https://www.mpich.org/][MPICH]]), but these notes focus on Open MPI.
-
-The image is built in 2 steps:
-
-1. The base image =base.sif= containing support libraries for the
-   network hardware and utilities needed to test if it works.
-2. The final image =openmpi.sif= includes everything in =base.sif=,
-   the Open MPI installation in =/opt/ompi=, and the "MPI Hello World"
-   program =/opt/mpi_hello= used to test Open MPI.
-
-   All the commands needed to build Open MPI are in a Bash script
-   =scripts/openmpi.sh=. This script can be used to build the matching
-   Open MPI version on the host.
-
-Run =make= to build both images.
-
-This separation makes it easier to separate issues related to version
-compatibility from ones related to hardware support.
-
-The definition files =base.def= and =openmpi.def= should be minimal.
-There are no unnecessary software packages, no environment variables.
-They document a minimal working setup.
-
-My hope is that this write up may save you some time; at least it
-should make it easier to ask the right questions when talking to HPC
-support staff.
+My hope is that this may save you some time; at least it should make
+it easier to ask the right questions when talking to HPC support
+staff.
 
 Edits (however minor), corrections, improvements, etc are always
-welcome.
+welcome. See [[file:todo.org][=todo.org=]] for a list of topics that are missing and
+known issues.
 
-* Software compatibility
+* Apptainer (Singularity) containers with Open MPI and InfiniBand
 
-** Open MPI
+Apptainer supports widely used open source MPI implementations ([[https://www.open-mpi.org/][Open
+MPI]] and [[https://www.mpich.org/][MPICH]] as well as its derivatives such as [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]), but these
+notes focus on Open MPI.
 
-The standard advice is "use the version installed on the host", but
-this is not always practical: we may want to support multiple hosts or
-the host may not have Open MPI installed.
+Proper MPI support requires attention to two issues:
 
-Moreover, we need to try to do what we can to simplify reproducible
-research and that may require using more current Open MPI versions
-than a certain host provides.
+1. compatibility between MPI libraries in the container and on a host,
+2. supporting network hardware.
 
-The plot below shows which Open MPI version combinations appear to be
-compatible. (See [[file:version_compatibility/README.md][=version_compatibility=]] for the
-setup used to produce it.)
+The goal is to build an image that should
 
-#+attr_html: :width 800px
-#+CAPTION: Compatibility between container and host Open MPI versions
-#+NAME:   fig:ompi-version-compatibility
-[[file:version_compatibility/grid.png]]
+- be minimal in terms of both content and complexity,
+- contain tools needed to check if it works on a particular host.
 
-Based on this I would recommend using Open MPI version 4.0.0 or newer
-in the container because these versions are compatible with Open MPI
-3.0.3 and newer on the host. Your mileage may vary.
+The whole process follows these steps:
 
-Note, also, that [[https://www.open-mpi.org/software/ompi/major-changes.php][Open MPI 4.1.x is ABI compatible with 4.0.x and 4.0.x
-is ABI compatible with 3.1.x and 3.0.x]].
+1. Install libraries needed to support network hardware we want to be
+   able to use.
+2. Test if the container can use the interconnect /without/ Open MPI.
+3. Install Open MPI with InfiniBand support.
+4. Configure Open MPI in the container (if necessary).
+5. Check if support for IB devices is included in Open MPI.
+6. Check if we can run a simple "MPI Hello world" program in the container.
+7. Install benchmarks and compare MPI performance (host vs container).
 
-*** Compatibility between Open MPI and its dependencies
+In this setup the first step corresponds to building an image using
+the definition file [[file:minimal/base.def][=minimal/base.def=]].
 
-It is worth pointing out that Open MPI relies on external libraries
-for some of its features and we need to use versions of these that are
-compatible with the chosen Open MPI version.
+Steps 3, 4 (and the installation part of 7) correspond to building the
+second (final) image using [[file:minimal/openmpi-base.def][=minimal/openmpi-base.def=]].
 
-In particular, we might have to build some libraries from source
-instead of using a package system if our container is based on a
-distribution that is significantly older than the chosen Open MPI
-version.
+This split makes it easier to separate issues related to version
+compatibility from ones related to hardware support.
 
-** Compatibility between the host kernel and the container OS
+You should be able to run =make -C minimal= to build
+=openmpi-base.sif= and /then/ use it to perform steps 2, 5, and 6.
 
-If you run a container and it fails with the error message saying
-=FATAL: kernel too old=, it is likely that the /host/ kernel is not
-supported by =glibc= in the container.
+#+begin_quote
+The definition files =minimal/base.def= and =minimal/openmpi-base.def=
+should have no unnecessary software packages, no extra environment
+variables. They document a minimal working setup.
+#+end_quote
 
-The relevant threshold is this: /glibc 2.26 and newer require Linux
-3.2 or newer./
-
-For example, given a host that runs CentOS 6.10, [[https://distrowatch.com/table.php?distribution=centos][this DistroWatch.com
-page]] shows that it uses Linux 2.6.32.
-
-To build a container that would run on this host we need to pick a
-Linux distribution version that
-
-- uses =glibc= older than 2.26,
-- is not past its end-of-life,
-- includes software versions (such as compilers) that are recent enough
-  for our purposes.
-
-In this particular case CentOS 7 should work: it uses =glibc= 2.17 and
-is supported until June of 2024.
-
-* InfiniBand and RDMA support 
-
-Supporting InfiniBand in a container is not that different from the
-same task on a host. Your HPC staff should be able to tell you which
-libraries are needed.
-
-See [[https://www.mellanox.com/products/infiniband-drivers/linux/mlnx_ofed][Mellanox OpenFabrics Enterprise Distribution for Linux]] for binary
-packages provided by NVIDIA and [[https://www.mellanox.com/support/mlnx-ofed-matrix?mtag=linux_sw_drivers][=MLNX_OFED=: Firmware - Driver
-Compatibility Matrix]] to see which driver version is needed for a
-particular model of the interconnect.
-
-RHEL 7 documentation lists these [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related software
-packages]].
-
-#+include: base.def example :lines "17-41"
-
-#+BEGIN_QUOTE
-Some packages are needed to configure IB hardware, to update firmware,
-etc. (This is one of the differences from IB support on a host.)
-#+END_QUOTE
-
-Note: recommended packages =libibverbs-utils= and =infiniband-diags=
-are used to test InfiniBand support below.
-
-** Checking if IB devices are available
-
-Running =ibv_devices= from =libibverbs-utils= should produce output
-similar to this:
+* Building a minimal base image "by hand"
    
+** Installing support libraries
+   
+Supporting InfiniBand in a container is not that different from the
+same task on a host: we need all the same user-space libraries.
+However, we do *not* need configuration tools, tools for updating
+firmware, etc.
+
+See [[https://www.mellanox.com/products/infiniband-drivers/linux/mlnx_ofed][Mellanox OpenFabrics Enterprise Distribution for Linux]] for
+binary packages provided by NVIDIA and [[https://www.mellanox.com/support/mlnx-ofed-matrix?mtag=linux_sw_drivers][=MLNX_OFED=: Firmware -
+Driver Compatibility Matrix]] to see which driver version is needed
+for a particular model of the interconnect.
+
+RHEL 7 documentation lists these [[https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/networking_guide/sec-infiniband_and_rdma_related_software_packages][InfiniBand and RDMA related
+software packages]].
+
+See [[file:minimal/base.def][=minimal/base.def=]] for details.
+
+** Testing InfiniBand devices
+
+Commands listed below assume that =base.sif= was built using the
+definition file from the previous step.
+
+We install =libibverbs-utils= and use
+- =ibv_devices= to check if IB devices are available, and
+- =ibv_rc_pingpong= to test inter-node communication.
+
+*** Checking if IB devices are available
+
+Running =ibv_devices= should produce output similar to this:
 #+BEGIN_EXAMPLE
   % singularity exec base.sif ibv_devices
       device                 node GUID
@@ -142,14 +97,12 @@ similar to this:
 
 Running the same command on a laptop that does not have IB devices
 gives this:
-
 #+BEGIN_EXAMPLE
   % singularity exec base.sif ibv_devices
   Failed to get IB devices list: Unknown error -38
 #+END_EXAMPLE
 
 Alternatively, run =ibstat= from =infiniband-diags=:
-
 #+BEGIN_EXAMPLE
   % singularity exec base.sif ibstat
   CA 'mlx4_0'
@@ -177,9 +130,7 @@ Without IB devices:
   ibpanic: [2137592] main: stat of IB device 'mthca0' failed: No such file or directory
 #+END_EXAMPLE
 
-** Checking inter-node communication using IB
-
-Here we use =ibv_rc_pingpong= from =libibverbs-utils=:
+*** Checking inter-node communication using IB
 
 Start an interactive job. On a system using [[https://slurm.schedmd.com/][Slurm]] this would require
 something like
@@ -208,39 +159,51 @@ Next, use the =hostname= output from above (here: =n2=) to run
 1000 iters in 0.01 seconds = 6.80 usec/iter
 #+END_EXAMPLE
 
-* Building Open MPI
+The throughput reported should be close to numbers advertised for the
+interconnect used by the host. (You can also run =ibv_rc_pingpong=
+/directly on the host/ --- without the container --- and compare
+results.)
 
-To be able to re-use a container we need to build Open MPI with
-support for all types of network hardware we intend to support.
-
-Installing support libraries in standard should be enough to get Open
-MPI to use them: it will [[https://www-lb.open-mpi.org/faq/?category=building#default-build][try to find support for all hardware and
-environments by looking for support libraries and header files in
+** Installing Open MPI
+   
+Installing support libraries in standard locations should be enough to
+get Open MPI to use them: it will [[https://www-lb.open-mpi.org/faq/?category=building#default-build][try to find support for all hardware
+and environments by looking for support libraries and header files in
 standard locations; skip them if not found]].
 
 The standard sequence
 #+BEGIN_SRC bash
 configure --prefix=${prefix} && make && make install
 #+END_SRC
-is likely to be sufficient, however one could use flags such as
-=--with-verbs= to force =configure= to stop if a required dependency
-was not found. See [[https://www-lb.open-mpi.org/faq/?category=building#build-p2p][How do I build Open MPI with support for {my
-favorite network type}?]] for more details.
+is likely to be sufficient. However, it may be a good idea to use flags
+such as =--with-verbs= to force =configure= to stop if a required
+dependency was not found. See [[https://www-lb.open-mpi.org/faq/?category=building#build-p2p][How do I build Open MPI with support for
+{my favorite network type}?]] for more details.
+
+#+begin_quote
+Open MPI versions from 4.0 onward recommend installing [[https://openucx.readthedocs.io/en/master/index.html][UCX]] to
+support Mellanox IB cards, but these notes (so far) use the older
+=openib= BTL (byte transfer layer).
+
+I may fix this later.
+#+end_quote
+
+** Checking if IB support in Open MPI is present
 
 Run
 #+BEGIN_SRC bash
-ompi_info --parsable | grep :openib
+ompi_info --parsable | grep openib
 #+END_SRC
 /after/ the build is complete to check if =openib= support was included.
-  
-** Configuring Open MPI
+
+** Configuring Open MPI in the container
 
 Open MPI uses a [[https://www.open-mpi.org/faq/?category=tuning#mca-def][Modular Component Architecture (MCA)]], i.e. a set of
 framework components and modules. Much of its behavior can be adjusted
 using MCA parameters that can be set using command-line options /or/
 configuration files.
 
-A comment in such a file says the following
+A comment in such a file says
 #+BEGIN_QUOTE
 Note that this file is only applicable where it is visible (in a
 filesystem sense). Specifically, MPI processes each read this file
@@ -255,11 +218,11 @@ that is shared via a networked filesystem, changes to this file will
 be visible to all nodes that share this $sysconf.
 #+END_QUOTE
 
-This means that configuration files on the host will not be seen by
-Open MPI in a container.
+This means that /configuration files on the host will not be seen by
+Open MPI in a container/.
 
-/We may need to modify a container to use settings appropriate on a
-given host./
+We may need to modify a container to use settings appropriate on a
+given host.
 
 *** Finding Open MPI's configuration files
 
@@ -295,12 +258,12 @@ Increasing verbosity for testing:
            ...
 #+END_SRC
 
-** Testing an Open MPI installation
+** The "MPI Hello world" test
 
-It is useful to include a simple "MPI Hello World" program in the base
-image. It looks like most compatibility and hardware support issues
-crop up during initialization (in the =MPI_Init()= call), so a test
-program as simple as that seems to do the job.
+It is useful to include a simple "MPI Hello world" program in a base
+image. It looks like most software compatibility and hardware support
+issues crop up during initialization (in the =MPI_Init()= call), so a
+test program as simple as that seems to do the job.
 
 The two recommended test steps are
 1. try using =mpirun= /in the container/
@@ -308,6 +271,7 @@ The two recommended test steps are
 
 *** Using =mpirun= in the container
 
+A successful run looks like this:
 #+BEGIN_EXAMPLE
 % singularity exec openmpi.sif mpirun -n 4 /opt/mpi_hello
 Hello from process 0/4!
@@ -362,31 +326,129 @@ To check IB initialization:
 This command should produce the same output as the one above (=mpirun=
 in the container).
 
-* To do
+   
+** Comparing Open MPI performance (container vs host)
 
-- Supporting hosts that use Slurm (install =munge= and PMIx 3.2.2 or
-  newer).
-- Document building containers using MPICH instead of Open MPI
-  (probably [[https://mvapich.cse.ohio-state.edu/][MVAPICH]]).
-- Update to use [[https://openucx.readthedocs.io/en/master/running.html#openmpi-with-ucx][UCX]] (and =libfabric=?). See [[https://openucx.readthedocs.io/en/master/running.html#running-mpi][Running UCX]] for more info.
+We use [[https://github.com/intel/mpi-benchmarks][Intel(R) MPI Benchmarks 2021.3]] to compare Open MPI performance
+when using the container versus the host MPI.
 
-  Add =--mca pml_base_verbose 100= to verbosity options (to check if
-  UCX *is* actually used).
+It is easy to build using MPI wrappers for the C++ compiler (see
+[[file:benchmarking/build-imb.sh][=benchmarking/build-imb.sh=]]):
 
-  Build Open MPI =--without-verbs= to [[https://www.open-mpi.org/faq/?category=openfabrics#ofa-device-error][avoid an error message about
-  device initialization]].
+#+include: benchmarking/build-imb.sh src bash :lines "9-"
 
-#+BEGIN_EXAMPLE
-  --------------------------------------------------------------------------
-  WARNING: There was an error initializing an OpenFabrics device.
+For a basic performance check it should be enough to run
+#+begin_src bash
+mpirun -n 2 IMB-MPI1 Sendrecv > imb-host.log
+mpirun -n 2 singularity exec openmpi-base.sif IMB-MPI1 Sendrecv > imb-container.log
+#+end_src
+and compare the logs this produces.
 
-    Local host:   chinook01
-    Local device: mlx4_0
-  --------------------------------------------------------------------------
-#+END_EXAMPLE
-  
-- Make sure that the list of packages in =base.def= does not include
-  anything unnecessary.
+For large message sizes the thoughput reported by the benchmark should
+be close to what's listed in the specs and to the number obtained
+using =ibv_rc_pingpong= above.
+
+#+begin_quote
+Similarly to =ibv_rc_pingpong=, it is important to run =mpirun -n 2
+IMB-MPI1 Sendrecv= on *two separate nodes*. See
+[[file:benchmarking/imb-job-script.sh][=benchmarking/imb-job-script.sh=]] for a way to do this on a system that
+uses Slurm.
+
+(When executed on a single node this benchmark is likely to use shared
+memory instead of the network interconnect.)
+#+end_quote
+
+* Using HPC Container Maker
+
+The [[https://github.com/NVIDIA/hpc-container-maker][HPC Container Maker]] (a Python command-line tool and a module)
+simplifies building containers that need to use NVIDIA devices -- both
+Mellanox InfiniBand cards (since NVIDIA owns Mellanox) and GPUs.
+
+A very basic Open MPI base image with IB support can be created using
+a recipe as simple as this:
+#+begin_src python
+  Stage0 += baseimage(image='centos:centos7', _as="devel")
+  Stage0 += ofed()
+  compiler = gnu()
+  Stage0 += compiler
+  Stage0 += openmpi(cuda=False, infiniband=True, toolchain=compiler.toolchain,
+                    version='4.1.2')
+#+end_src
+See [[https://github.com/NVIDIA/hpc-container-maker/tree/master/docs#readme][HPCCM documentation]] for more.
+
+See [[file:hpccm/openmpi-base.py][=hpccm/openmpi-base.py=]] for a recipe that builds an image roughly
+equivalent to the "minimal" one above. This recipe is converted to
+=hpccm/openmpi-base.def= using [[file:hpccm/Makefile][this =Makefile=]].
+
+* Regarding software compatibility
+
+** Open MPI in the container vs the host version
+
+The standard advice is "use the version installed on the host", but
+this is not always practical: we may want to support multiple hosts or
+the host may not have Open MPI installed.
+
+Moreover, we need to try to do what we can to simplify reproducible
+research and that may require using more current Open MPI versions
+than a certain host provides.
+
+The plot below shows which Open MPI version combinations appear to be
+compatible. (See [[file:version_compatibility/README.md][=version_compatibility=]] for the
+setup used to produce it.)
+
+#+attr_html: :width 800px
+#+CAPTION: Compatibility between container and host Open MPI versions
+#+NAME:   fig:ompi-version-compatibility
+[[file:version_compatibility/grid.png]]
+
+Based on this I would recommend using Open MPI version 4.0.0 or newer
+in the container because these versions are compatible with Open MPI
+3.0.3 and newer on the host. Your mileage may vary.
+
+#+begin_quote
+A better advice may be "convince your HPC support staff to install
+Slurm with PMIx on the host and configure Open MPI in the container to
+use PMIx."
+#+end_quote
+
+#+begin_quote
+Note, also, that [[https://www.open-mpi.org/software/ompi/major-changes.php][Open MPI 4.1.x is ABI compatible with 4.0.x and 4.0.x
+is ABI compatible with 3.1.x and 3.0.x]].
+#+end_quote
+
+*** Compatibility between Open MPI and its dependencies
+
+It is worth pointing out that Open MPI relies on external libraries
+for some of its features and we need to use versions of these that are
+compatible with the chosen Open MPI version.
+
+In particular, we might have to build some libraries from source
+instead of using a package system if our container is based on a
+distribution that is significantly older than the chosen Open MPI
+version.
+
+** Compatibility between the host kernel and the container OS
+
+If you run a container and it fails with the error message saying
+=FATAL: kernel too old=, it is likely that the /host/ kernel is not
+supported by =glibc= in the container.
+
+The relevant threshold is this: /glibc 2.26 and newer require Linux
+3.2 or newer./
+
+For example, given a host that runs CentOS 6.10, [[https://distrowatch.com/table.php?distribution=centos][this DistroWatch.com
+page]] shows that it uses Linux 2.6.32.
+
+To build a container that would run on this host we need to pick a
+Linux distribution version that
+
+- uses =glibc= older than 2.26,
+- is not past its end-of-life,
+- includes software versions (such as compilers) that are recent enough
+  for our purposes.
+
+In this particular case CentOS 7 should work: it uses =glibc= 2.17 and
+is supported until June of 2024.
 
 * Acknowledgments
 
@@ -402,3 +464,5 @@ supports Slurm come from the same recording.
 
 Some of the ideas come from the discussion of the
 [[https://github.com/apptainer/singularity/issues/876][Apptainer/singularity issue 876]].
+
+#  LocalWords:  InfiniBand
