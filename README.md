@@ -1,27 +1,27 @@
 
 # Table of Contents
 
-1.  [Apptainer (Singularity) containers with Open MPI and InfiniBand](#org5ed2459)
-2.  [Building a minimal base image "by hand"](#org54f27d1)
-    1.  [Installing support libraries](#orgc12a689)
-    2.  [Testing InfiniBand devices](#org5243b96)
-        1.  [Checking if IB devices are available](#org42ba3d9)
-        2.  [Checking inter-node communication using IB](#orga84638d)
-    3.  [Installing Open MPI](#org7a5d703)
-    4.  [Checking if IB support in Open MPI is present](#org66a0e2f)
-    5.  [Configuring Open MPI in the container](#orgc21ef0a)
-        1.  [Finding Open MPI's configuration files](#org1cd0f99)
-        2.  [Useful MCA parameters](#org2e2f14b)
-    6.  [The "MPI Hello world" test](#orge3044d5)
-        1.  [Using `mpirun` in the container](#org117f76a)
-        2.  [Using `mpirun` on the host](#org431ec7b)
-    7.  [Comparing MPI performance (container vs host)](#org62ed4cf)
-3.  [Using HPC Container Maker](#org0707d51)
-4.  [Regarding software compatibility](#org28e91e7)
-    1.  [Open MPI in the container vs the host version](#org3901297)
-        1.  [Compatibility between Open MPI and its dependencies](#orgdd906ac)
-    2.  [Compatibility between the host kernel and the container OS](#org53a7401)
-5.  [Acknowledgments](#org408c80f)
+1.  [Apptainer (Singularity) containers with Open MPI and InfiniBand](#orgf90f289)
+2.  [Building a minimal base image "by hand"](#org811e452)
+    1.  [Installing support libraries](#orgc48e867)
+    2.  [Testing InfiniBand devices](#orgc6a60da)
+        1.  [Checking if IB devices are available](#orgfd1dfcf)
+        2.  [Checking inter-node communication using IB](#orgfee7292)
+    3.  [Installing Open MPI](#org4f473a5)
+    4.  [Checking if IB support in Open MPI is present](#orgc51dfca)
+    5.  [Configuring Open MPI in the container](#orga8d32c5)
+        1.  [Finding Open MPI's configuration files](#org12eb94a)
+        2.  [Useful MCA parameters](#orgdcddeec)
+    6.  [The "MPI Hello world" test](#org67fa7d8)
+        1.  [Using `mpirun` in the container](#org4ee08cc)
+        2.  [Using `mpirun` on the host](#orge5a2898)
+    7.  [Comparing MPI performance (container vs host)](#orgaa40b1e)
+3.  [Using HPC Container Maker](#org6c891f3)
+4.  [Regarding software compatibility](#orgd9eda2d)
+    1.  [Open MPI in the container vs the host version](#orgf2b06bb)
+        1.  [Compatibility between Open MPI and its dependencies](#orgc9f80b8)
+    2.  [Compatibility between the host kernel and the container OS](#org36debdf)
+5.  [Acknowledgments](#org52fe259)
 
 These notes document my attempt to build an [Apptainer](https://apptainer.org/) (or
 [SingularityCE](https://sylabs.io/singularity/)) base container that can be used to run MPI-based
@@ -36,7 +36,7 @@ welcome. See [`todo.org`](todo.md) for a list of topics that are missing and
 known issues.
 
 
-<a id="org5ed2459"></a>
+<a id="orgf90f289"></a>
 
 # Apptainer (Singularity) containers with Open MPI and InfiniBand
 
@@ -82,12 +82,12 @@ You should be able to run `make -C minimal` to build
 > variables. They document a minimal working setup.
 
 
-<a id="org54f27d1"></a>
+<a id="org811e452"></a>
 
 # Building a minimal base image "by hand"
 
 
-<a id="orgc12a689"></a>
+<a id="orgc48e867"></a>
 
 ## Installing support libraries
 
@@ -107,7 +107,7 @@ software packages](https://access.redhat.com/documentation/en-us/red_hat_enterpr
 See [`minimal/base.def`](minimal/base.def) for details.
 
 
-<a id="org5243b96"></a>
+<a id="orgc6a60da"></a>
 
 ## Testing InfiniBand devices
 
@@ -120,7 +120,7 @@ We install `libibverbs-utils` and use
 -   `ibv_rc_pingpong` to test inter-node communication.
 
 
-<a id="org42ba3d9"></a>
+<a id="orgfd1dfcf"></a>
 
 ### Checking if IB devices are available
 
@@ -164,7 +164,7 @@ Without IB devices:
     ibpanic: [2137592] main: stat of IB device 'mthca0' failed: No such file or directory
 
 
-<a id="orga84638d"></a>
+<a id="orgfee7292"></a>
 
 ### Checking inter-node communication using IB
 
@@ -176,7 +176,7 @@ something like
 Then, run this on a compute node to start `ibv_rc_pingpong` in its
 *server* mode:
 
-    % hostname && singularity exec openmpi.sif ibv_rc_pingpong
+    % hostname && singularity exec base.sif ibv_rc_pingpong
     n2
       local address:  LID 0x0091, QPN 0x03006b, PSN 0x5a83c9, GID ::
       remote address: LID 0x0031, QPN 0x002962, PSN 0x850520, GID ::
@@ -186,7 +186,7 @@ Then, run this on a compute node to start `ibv_rc_pingpong` in its
 Next, use the `hostname` output from above (here: `n2`) to run
 `ibv_rc_pingpong` on the login node:
 
-    % singularity exec openmpi.sif ibv_rc_pingpong n2
+    % singularity exec base.sif ibv_rc_pingpong n2
       local address:  LID 0x0031, QPN 0x002962, PSN 0x850520, GID ::
       remote address: LID 0x0091, QPN 0x03006b, PSN 0x5a83c9, GID ::
     8192000 bytes in 0.01 seconds = 9630.57 Mbit/sec
@@ -198,7 +198,7 @@ interconnect used by the host. (You can also run `ibv_rc_pingpong`
 results.)
 
 
-<a id="org7a5d703"></a>
+<a id="org4f473a5"></a>
 
 ## Installing Open MPI
 
@@ -223,7 +223,7 @@ dependency was not found. See [How do I build Open MPI with support for
 > I may fix this later.
 
 
-<a id="org66a0e2f"></a>
+<a id="orgc51dfca"></a>
 
 ## Checking if IB support in Open MPI is present
 
@@ -234,7 +234,7 @@ Run
 *after* the build is complete to check if `openib` support was included.
 
 
-<a id="orgc21ef0a"></a>
+<a id="orga8d32c5"></a>
 
 ## Configuring Open MPI in the container
 
@@ -264,7 +264,7 @@ We may need to modify a container to use settings appropriate on a
 given host.
 
 
-<a id="org1cd0f99"></a>
+<a id="org12eb94a"></a>
 
 ### Finding Open MPI's configuration files
 
@@ -283,7 +283,7 @@ your module system sets `MPI_HOME`):
     cat ${MPI_HOME}/etc/openmpi-mca-params.conf | grep -Ev "^#|^$"
 
 
-<a id="org2e2f14b"></a>
+<a id="orgdcddeec"></a>
 
 ### Useful MCA parameters
 
@@ -300,7 +300,7 @@ Increasing verbosity for testing:
            ...
 
 
-<a id="orge3044d5"></a>
+<a id="org67fa7d8"></a>
 
 ## The "MPI Hello world" test
 
@@ -315,13 +315,13 @@ The two recommended test steps are
 2.  try using `mpirun` *on the host*.
 
 
-<a id="org117f76a"></a>
+<a id="org4ee08cc"></a>
 
 ### Using `mpirun` in the container
 
 A successful run looks like this:
 
-    % singularity exec openmpi.sif mpirun -n 4 mpi_hello
+    % singularity exec openmpi-base.sif mpirun -n 4 mpi_hello
     Hello from process 0/4!
     Hello from process 1/4!
     Hello from process 2/4!
@@ -330,7 +330,7 @@ A successful run looks like this:
 We can also increase verbosity to check if Open MPI succeeded at
 initializing InfiniBand devices:
 
-    % singularity exec openmpi.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 mpi_hello | grep openib
+    % singularity exec openmpi-base.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 mpi_hello | grep openib
     [hostname:pid] mca: base: components_register: found loaded component openib
     [hostname:pid] mca: base: components_register: component openib register function successful
     [hostname:pid] mca: base: components_open: found loaded component openib
@@ -346,13 +346,13 @@ with `hostname` and `pid` replaced with the host name and `pid` with
 the process ID.
 
 
-<a id="org431ec7b"></a>
+<a id="orge5a2898"></a>
 
 ### Using `mpirun` on the host
 
 A successful run looks like this:
 
-    % mpirun -n 4 singularity exec openmpi.sif mpi_hello
+    % mpirun -n 4 singularity exec openmpi-base.sif mpi_hello
     Hello from process 0/4!
     Hello from process 1/4!
     Hello from process 2/4!
@@ -369,13 +369,13 @@ To check IB initialization:
     mpirun -n 1 \
            --mca btl_base_verbose 100 \
            --mca mca_base_verbose stdout \
-           singularity exec openmpi.sif mpi_hello | grep openib
+           singularity exec openmpi-base.sif mpi_hello | grep openib
 
 This command should produce the same output as the one above (`mpirun`
 in the container).
 
 
-<a id="org62ed4cf"></a>
+<a id="orgaa40b1e"></a>
 
 ## Comparing MPI performance (container vs host)
 
@@ -395,7 +395,7 @@ It is easy to build using MPI compiler wrappers (see
     
     cd ..
     
-    rm -rf mpi-benchmarks-IMB-v2021.3 # IMB-v2021.3.tar.gz
+    rm -rf mpi-benchmarks-IMB-v2021.3 IMB-v2021.3.tar.gz
 
 For a basic performance check it should be enough to run
 
@@ -417,7 +417,7 @@ using `ibv_rc_pingpong` above.
 > memory instead of the network interconnect.)
 
 
-<a id="org0707d51"></a>
+<a id="org6c891f3"></a>
 
 # Using HPC Container Maker
 
@@ -441,12 +441,12 @@ equivalent to the "minimal" one above. This recipe is converted to
 `hpccm/openmpi-base.def` using [this `Makefile`](hpccm/Makefile).
 
 
-<a id="org28e91e7"></a>
+<a id="orgd9eda2d"></a>
 
 # Regarding software compatibility
 
 
-<a id="org3901297"></a>
+<a id="orgf2b06bb"></a>
 
 ## Open MPI in the container vs the host version
 
@@ -476,7 +476,7 @@ in the container because these versions are compatible with Open MPI
 > is ABI compatible with 3.1.x and 3.0.x](https://www.open-mpi.org/software/ompi/major-changes.php).
 
 
-<a id="orgdd906ac"></a>
+<a id="orgc9f80b8"></a>
 
 ### Compatibility between Open MPI and its dependencies
 
@@ -490,7 +490,7 @@ distribution that is significantly older than the chosen Open MPI
 version.
 
 
-<a id="org53a7401"></a>
+<a id="org36debdf"></a>
 
 ## Compatibility between the host kernel and the container OS
 
@@ -516,7 +516,7 @@ In this particular case CentOS 7 should work: it uses `glibc` 2.17 and
 is supported until June of 2024.
 
 
-<a id="org408c80f"></a>
+<a id="org52fe259"></a>
 
 # Acknowledgments
 

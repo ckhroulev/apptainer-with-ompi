@@ -141,7 +141,7 @@ srun -p debug --nodes=1 --exclusive -I --pty /bin/bash
 Then, run this on a compute node to start =ibv_rc_pingpong= in its
 /server/ mode:
 #+BEGIN_EXAMPLE
-% hostname && singularity exec openmpi.sif ibv_rc_pingpong
+% hostname && singularity exec base.sif ibv_rc_pingpong
 n2
   local address:  LID 0x0091, QPN 0x03006b, PSN 0x5a83c9, GID ::
   remote address: LID 0x0031, QPN 0x002962, PSN 0x850520, GID ::
@@ -152,7 +152,7 @@ n2
 Next, use the =hostname= output from above (here: =n2=) to run
 =ibv_rc_pingpong= on the login node:
 #+BEGIN_EXAMPLE
-% singularity exec openmpi.sif ibv_rc_pingpong n2
+% singularity exec base.sif ibv_rc_pingpong n2
   local address:  LID 0x0031, QPN 0x002962, PSN 0x850520, GID ::
   remote address: LID 0x0091, QPN 0x03006b, PSN 0x5a83c9, GID ::
 8192000 bytes in 0.01 seconds = 9630.57 Mbit/sec
@@ -273,7 +273,7 @@ The two recommended test steps are
 
 A successful run looks like this:
 #+BEGIN_EXAMPLE
-% singularity exec openmpi.sif mpirun -n 4 mpi_hello
+% singularity exec openmpi-base.sif mpirun -n 4 mpi_hello
 Hello from process 0/4!
 Hello from process 1/4!
 Hello from process 2/4!
@@ -283,7 +283,7 @@ Hello from process 3/4!
 We can also increase verbosity to check if Open MPI succeeded at
 initializing InfiniBand devices:
 #+BEGIN_EXAMPLE
-% singularity exec openmpi.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 mpi_hello | grep openib
+% singularity exec openmpi-base.sif mpirun --mca btl_base_verbose 100 --mca mca_base_verbose stdout -n 1 mpi_hello | grep openib
 [hostname:pid] mca: base: components_register: found loaded component openib
 [hostname:pid] mca: base: components_register: component openib register function successful
 [hostname:pid] mca: base: components_open: found loaded component openib
@@ -303,7 +303,7 @@ the process ID.
 
 A successful run looks like this:
 #+BEGIN_EXAMPLE
-% mpirun -n 4 singularity exec openmpi.sif mpi_hello
+% mpirun -n 4 singularity exec openmpi-base.sif mpi_hello
 Hello from process 0/4!
 Hello from process 1/4!
 Hello from process 2/4!
@@ -320,7 +320,7 @@ To check IB initialization:
   mpirun -n 1 \
          --mca btl_base_verbose 100 \
          --mca mca_base_verbose stdout \
-         singularity exec openmpi.sif mpi_hello | grep openib
+         singularity exec openmpi-base.sif mpi_hello | grep openib
 #+END_SRC
 
 This command should produce the same output as the one above (=mpirun=
